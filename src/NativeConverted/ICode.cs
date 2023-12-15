@@ -19,15 +19,14 @@
 
 	private void CheckBounds( int size )
 	{
-		if ( cursor.Substring( size ) >= pCode[( int )AnonymousEnum2.CodeSegmentSize] )
+		if ( cursor.Substring( size ) >= pCode[( int )AnonymousEnum.CodeSegmentSize] )
 		{
 		Error( TErrorCode.ErrCodeSegmentOverflow );
 		AbortTranslation( TAbortCode.AbortCodeSegmentOverflow );
 		}
 	}
-	//endfig
-
-	//--------------------------------------------------------------
+	
+    //--------------------------------------------------------------
 	//  GetSymtabNode       Extract a symbol table node pointer
 	//                      from the intermediate code.
 	//
@@ -36,8 +35,6 @@
 
 	private TSymtabNode GetSymtabNode()
 	{
-//C++ TO C# CONVERTER NOTE: 'extern' variable declarations are not required in C#:
-//		extern TSymtab **vpSymtabs;
 		short xSymtab; // symbol table and node indexes
 		short xNode;
 
@@ -142,7 +139,7 @@
 
 		//--Insert a statement marker code
 		//--followed by the current line number.
-		char code = GlobalMembers.mcLineMarker;
+		char code = Globals.mcLineMarker;
 		short number = currentLineNumber;
 		CheckBounds( sizeof( char ) + sizeof( short ) );
 //C++ TO C# CONVERTER TODO TASK: The memory management function 'memcpy' has no equivalent in C#:
@@ -158,7 +155,6 @@
 		cursor += sizeof( char );
 	}
 
-	//fig 10-6
 	//--------------------------------------------------------------
 	//  PutLocationMarker   Append a location marker to the
 	//                      intermediate code.
@@ -174,7 +170,7 @@
 			return 0;
 
 		//--Append the location marker code.
-		char code = GlobalMembers.mcLocationMarker;
+		char code = Globals.mcLocationMarker;
 		CheckBounds( sizeof( char ) );
 //C++ TO C# CONVERTER TODO TASK: The memory management function 'memcpy' has no equivalent in C#:
 		memcpy( ( object ) cursor, ( object ) & code, sizeof( char ) );
@@ -227,9 +223,7 @@
 
 		return ( int )offset;
 	}
-	//endfig
-
-	//fig 10-10
+	
 	//--------------------------------------------------------------
 	//  PutCaseItem         Append a CASE item to the intermediate
 	//                      code.
@@ -287,21 +281,15 @@
 		cursor = pCode.Substring( location );
 	}
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: int CurrentLocation() const
 	public int CurrentLocation()
 	{
 		return cursor - pCode;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *SymtabNode() const
 	public TSymtabNode SymtabNode()
 	{
 		return pNode;
 	}
 
-
-	//fig 10-7
 	//--------------------------------------------------------------
 	//  Get                 Extract the next token from the
 	//                      intermediate code.
@@ -326,7 +314,7 @@
 		token = ( TTokenCode ) code;
 
 		//--If it's a line marker, extract the line number.
-		if ( token == GlobalMembers.mcLineMarker )
+		if ( token == Globals.mcLineMarker )
 		{
 			short number;
 
@@ -335,7 +323,7 @@
 			currentLineNumber = number;
 			cursor += sizeof( short );
 		}
-		} while ( token == GlobalMembers.mcLineMarker );
+		} while ( token == Globals.mcLineMarker );
 
 		//--Determine the token class, based on the token code.
 		switch ( token )
@@ -352,7 +340,7 @@
 			pToken.code = TTokenCode.TcIdentifier;
 			break;
 
-		case GlobalMembers.mcLocationMarker:
+		case Globals.mcLocationMarker:
 			pToken = specialToken;
 			pToken.code = token;
 			break;
@@ -380,14 +368,14 @@
 			pToken.string = pNode.String();
 			break;
 
-		case GlobalMembers.mcLocationMarker:
+		case Globals.mcLocationMarker:
 			pNode = null;
 			pToken.string[0] = '\0';
 			break;
 
 		default:
 			pNode = null;
-			pToken.string = GlobalMembers.symbolStrings[code];
+			pToken.string = Globals.symbolStrings[code];
 			break;
 		}
 

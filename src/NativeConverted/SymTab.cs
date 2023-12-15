@@ -151,12 +151,7 @@ public class TDefn : System.IDisposable
 //  TSymtabNode         Symbol table node class.
 //--------------------------------------------------------------
 
-//C++ TO C# CONVERTER NOTE: C# has no need of forward class declarations:
-//class TLineNumList;
-//C++ TO C# CONVERTER NOTE: C# has no need of forward class declarations:
-//class TType;
-
-public class TSymtabNode : System.IDisposable
+public class TSymtabNode : IDisposable
 {
 	private TSymtabNode left; // ptrs to left and right subtrees
 	private TSymtabNode right;
@@ -164,9 +159,6 @@ public class TSymtabNode : System.IDisposable
 	private short xSymtab; // symbol table index
 	private short xNode; // node index
 	private TLineNumList pLineNumList; // ptr to list of line numbers
-
-//C++ TO C# CONVERTER TODO TASK: C# has no concept of a 'friend' class:
-//	friend class TSymtab;
 
 	public TSymtabNode next; // ptr to next sibling in chain
 	public TType pType; // ptr to type info
@@ -199,14 +191,14 @@ public class TSymtabNode : System.IDisposable
 		pType = null;
 		xNode = 0;
 		level = currentNestingLevel;
-		labelIndex = ++GlobalMembers.asmLabelIndex;
+		labelIndex = ++Globals.asmLabelIndex;
 
 		//--Allocate and copy the symbol string.
 		pString = new string( new char[pStr.Length] );
 		pString = pStr;
 
 		//--If cross-referencing, update the line number list.
-		if ( GlobalMembers.xrefFlag != 0 )
+		if ( Globals.xrefFlag != 0 )
 			pLineNumList = new TLineNumList();
 	}
 
@@ -216,8 +208,6 @@ public class TSymtabNode : System.IDisposable
 
    public void Dispose()
    {
-	   void RemoveType( TType * pType );
-
 	   //--First the subtrees (if any).
 	   if ( left != null )
 		   left.Dispose();
@@ -231,32 +221,22 @@ public class TSymtabNode : System.IDisposable
 	   RemoveType( pType );
    }
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *LeftSubtree() const
 	public TSymtabNode LeftSubtree()
 	{
 		return left;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *RightSubtree() const
 	public TSymtabNode RightSubtree()
 	{
 		return right;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: char *String() const
 	public string String()
 	{
 		return pString;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: short SymtabIndex() const
 	public short SymtabIndex()
 	{
 		return xSymtab;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: short NodeIndex() const
 	public short NodeIndex()
 	{
 		return xNode;
@@ -292,8 +272,6 @@ public class TSymtabNode : System.IDisposable
 	//              symbol string, and then its line numbers.
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void Print() const
 	public void Print()
 	{
 		const int maxNamePrintWidth = 16;
@@ -306,7 +284,7 @@ public class TSymtabNode : System.IDisposable
 		//--                 and then the identifier information.
 //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
 //ORIGINAL LINE: sprintf(list.text, "%*s", maxNamePrintWidth, pString);
-		list.text = string.Format( "%*s", maxNamePrintWidth, pString );
+		list.text = String.Format( "%*s", maxNamePrintWidth, pString );
 		if ( pLineNumList != null )
 		pLineNumList.Print( pString.Length > maxNamePrintWidth, maxNamePrintWidth );
 		else
@@ -323,8 +301,6 @@ public class TSymtabNode : System.IDisposable
 	//                          identifier's definition and type.
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintIdentifier() const
 	public void PrintIdentifier()
 	{
 		switch ( defn.how )
@@ -348,25 +324,20 @@ public class TSymtabNode : System.IDisposable
 	//                      identifier for the cross-reference.
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintConstant() const
 	public void PrintConstant()
 	{
-//C++ TO C# CONVERTER NOTE: 'extern' variable declarations are not required in C#:
-//		extern TListBuffer list;
-
 		list.PutLine();
 		list.PutLine( "Defined constant" );
 
 		//--Value
 		if ( ( pType == pIntegerType ) || ( pType.form == TFormCode.FcEnum ) )
-		list.text = string.Format( "Value = {0:D}", defn.constant.value.integer );
+		list.text = String.Format( "Value = {0:D}", defn.constant.value.integer );
 		else if ( pType == pRealType )
-		list.text = string.Format( "Value = {0:g}", defn.constant.value.real );
+		list.text = String.Format( "Value = {0:g}", defn.constant.value.real );
 		else if ( pType == pCharType )
-		list.text = string.Format( "Value = '{0}'", defn.constant.value.character );
+		list.text = String.Format( "Value = '{0}'", defn.constant.value.character );
 		else if ( pType.form == TFormCode.FcArray )
-		list.text = string.Format( "Value = '{0}'", defn.constant.value.pString );
+		list.text = String.Format( "Value = '{0}'", defn.constant.value.pString );
 		list.PutLine();
 
 		//--Type information
@@ -381,13 +352,8 @@ public class TSymtabNode : System.IDisposable
 	//                          cross-reference.
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintVarOrField() const
 	public void PrintVarOrField()
 	{
-//C++ TO C# CONVERTER NOTE: 'extern' variable declarations are not required in C#:
-//		extern TListBuffer list;
-
 		list.PutLine();
 		list.PutLine( defn.how == ( ( int )TDefnCode.DcVariable ) != 0 ? "Declared variable" : "Declared record field" );
 
@@ -403,8 +369,6 @@ public class TSymtabNode : System.IDisposable
 	//                      identifier for the cross-reference.
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintType() const
 	public void PrintType()
 	{
 		list.PutLine();
@@ -433,11 +397,6 @@ public class TSymtab : System.IDisposable
 
 	public TSymtab()
 	{
-//C++ TO C# CONVERTER NOTE: 'extern' variable declarations are not required in C#:
-//	extern int cntSymtabs;
-//C++ TO C# CONVERTER NOTE: 'extern' variable declarations are not required in C#:
-//	extern TSymtab *pSymtabList;
-
 	root = null;
 	vpNodes = null;
 	cntNodes = 0;
@@ -471,8 +430,6 @@ public class TSymtab : System.IDisposable
 	//  Return: ptr to the node if found, else NULL
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *Search(const char *pString) const
 	public TSymtabNode Search( string pString )
 	{
 		TSymtabNode pNode = root; // ptr to symbol table node
@@ -490,7 +447,7 @@ public class TSymtab : System.IDisposable
 		}
 
 		//--If found and cross-referencing, update the line number list.
-		if ( GlobalMembers.xrefFlag != 0 && ( comp == 0 ) )
+		if ( Globals.xrefFlag != 0 && ( comp == 0 ) )
 			pNode.pLineNumList.Update();
 
 		return pNode; // ptr to node, or NULL if not found
@@ -557,38 +514,26 @@ public class TSymtab : System.IDisposable
 		return pNode;
 	}
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *Root() const
 	public TSymtabNode Root()
 	{
 		return root;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *Get(short xNode) const
 	public TSymtabNode Get( short xNode )
 	{
 		return vpNodes[xNode];
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtab *Next() const
 	public TSymtab Next()
 	{
 		return next;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode **NodeVector() const
 	public TSymtabNode[] NodeVector()
 	{
 		return vpNodes;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: int NodeCount() const
 	public int NodeCount()
 	{
 		return cntNodes;
 	}
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void Print() const
 	public void Print()
 	{
 		root.Print();
@@ -614,20 +559,18 @@ public class TSymtab : System.IDisposable
 	}
 }
 
-//fig 8-5
 //--------------------------------------------------------------
 //  TSymtabStack      Symbol table stack class.
 //--------------------------------------------------------------
 
 public class TSymtabStack : System.IDisposable
 {
-//C++ TO C# CONVERTER NOTE: Enums must be named in C#, so the following enum has been named AnonymousEnum2:
 	private enum AnonymousEnum2
 	{
 		MaxNestingLevel = 8
 	}
 
-	private TSymtab[] pSymtabs = Arrays.InitializeWithDefaultInstances<TSymtab>( ( int )AnonymousEnum.MaxNestingLevel ); // stack of symbol table ptrs
+	private TSymtab[] pSymtabs = Arrays.InitializeWithDefaultInstances<TSymtab>( ( int )AnonymousEnum2.MaxNestingLevel ); // stack of symbol table ptrs
 
 
 	//              ************************
@@ -636,7 +579,6 @@ public class TSymtabStack : System.IDisposable
 	//              *		       *
 	//              ************************
 
-	//fig 8-6
 	//--------------------------------------------------------------
 	//  Constructor	    Initialize the global (level 0) symbol
 	//		    table, and set the others to NULL.
@@ -644,10 +586,6 @@ public class TSymtabStack : System.IDisposable
 
 	public TSymtabStack()
 	{
-//C++ TO C# CONVERTER NOTE: 'extern' variable declarations are not required in C#:
-//		extern TSymtab globalSymtab;
-		void InitializeStandardRoutines( TSymtab * pSymtab );
-
 		currentNestingLevel = 0;
 		for ( int i = 1; i < AnonymousEnum.MaxNestingLevel; ++i )
 			pSymtabs[i] = null;
@@ -682,8 +620,6 @@ public class TSymtabStack : System.IDisposable
 	return pSymtabs[currentNestingLevel].EnterNew( pString, dc );
 	}
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtab *GetCurrentSymtab() const
 	public TSymtab GetCurrentSymtab()
 	{
 	return pSymtabs[currentNestingLevel];
@@ -704,8 +640,6 @@ public class TSymtabStack : System.IDisposable
 	//  Return: ptr to symbol table node if found, else NULL
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *SearchAll(const char *pString) const
 	public TSymtabNode SearchAll( string pString )
 	{
 		for ( int i = currentNestingLevel; i >= 0; --i )
@@ -730,8 +664,6 @@ public class TSymtabStack : System.IDisposable
 	//  Return: ptr to symbol table node
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TSymtabNode *Find(const char *pString) const
 	public TSymtabNode Find( string pString )
 	{
 		TSymtabNode pNode = SearchAll( pString );
@@ -778,7 +710,6 @@ public class TSymtabStack : System.IDisposable
 		return pSymtabs[currentNestingLevel--];
 	}
 }
-//endfig
 
 //--------------------------------------------------------------
 //  TLineNumNode        Line number node class.
@@ -788,9 +719,6 @@ public class TLineNumNode
 {
 	private TLineNumNode next; // ptr to next node
 	private readonly int number; // the line number
-
-//C++ TO C# CONVERTER TODO TASK: C# has no concept of a 'friend' class:
-//	friend class TLineNumList;
 
 	public TLineNumNode()
 	{
@@ -812,7 +740,6 @@ public class TLineNumList : System.IDisposable
 	{
 		head = tail = new TLineNumNode();
 	}
-	//endfig
 
 	//              **********************
 	//              *                    *
@@ -862,8 +789,6 @@ public class TLineNumList : System.IDisposable
 	//      indent      : amount to indent subsequent lines
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void Print(int newLineFlag, int indent) const
 	public void Print( int newLineFlag, int indent )
 	{
 		const int maxLineNumberPrintWidth = 4;
@@ -887,7 +812,7 @@ public class TLineNumList : System.IDisposable
 			list.PutLine();
 //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
 //ORIGINAL LINE: sprintf(list.text, "%*s", indent, " ");
-			list.text = string.Format( "%*s", indent, " " );
+			list.text = String.Format( "%*s", indent, " " );
 			plt = &list.text[indent];
 			n = maxLineNumbersPerLine;
 		}
@@ -895,7 +820,7 @@ public class TLineNumList : System.IDisposable
 		//--Append the line number to the list text.
 //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
 //ORIGINAL LINE: sprintf(plt, "%*d", maxLineNumberPrintWidth, pNode->number);
-		plt = string.Format( "%*d", maxLineNumberPrintWidth, pNode.number );
+		plt = String.Format( "%*d", maxLineNumberPrintWidth, pNode.number );
 		plt += maxLineNumberPrintWidth;
 		--n;
 		}

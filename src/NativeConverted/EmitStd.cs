@@ -16,102 +16,758 @@
 //  *                                                           *
 //  *************************************************************
 
-//C++ TO C# CONVERTER NOTE: The following #define macro was replaced in-line:
-//ORIGINAL LINE: #define Emit0(opcode) { Operator(opcode); pAsmBuffer->PutLine(); }
-//C++ TO C# CONVERTER NOTE: The following #define macro was replaced in-line:
-//ORIGINAL LINE: #define Emit1(opcode, operand1) { Operator(opcode); pAsmBuffer->Put('\t'); operand1; pAsmBuffer->PutLine(); }
-//C++ TO C# CONVERTER NOTE: The following #define macro was replaced in-line:
-//ORIGINAL LINE: #define Emit2(opcode, operand1, operand2) { Operator(opcode); pAsmBuffer->Put('\t'); operand1; pAsmBuffer->Put(','); operand2; pAsmBuffer->PutLine(); }
+partial class TCodeGenerator
+{
+    //--------------------------------------------------------------
+    //  EmitStandardSubroutineCall  Emit code for a call to a
+    //                              standard procedure or function.
+    //
+    //      pRoutineId : ptr to the subroutine name's symtab node
+    //
+    //  Return: ptr to the call's type object
+    //--------------------------------------------------------------
+    public TType EmitStandardSubroutineCall ( TSymtabNode pRoutineId )
+    {
+        switch (pRoutineId.defn.routine.which)
+        {
 
+            case TRoutineCode.RcRead:
+            case TRoutineCode.RcReadln:
+            return EmitReadReadlnCall(pRoutineId);
 
-//fig 14-18
-//--------------------------------------------------------------
-//  EmitStandardSubroutineCall  Emit code for a call to a
-//                              standard procedure or function.
-//
-//      pRoutineId : ptr to the subroutine name's symtab node
-//
-//  Return: ptr to the call's type object
-//--------------------------------------------------------------
+            case TRoutineCode.RcWrite:
+            case TRoutineCode.RcWriteln:
+            return EmitWriteWritelnCall(pRoutineId);
 
-//endfig
+            case TRoutineCode.RcEof:
+            case TRoutineCode.RcEoln:
+            return EmitEofEolnCall(pRoutineId);
 
-//fig 14-19
-//--------------------------------------------------------------
-//  EmitReadReadlnCall          Emit code for a call to read or
-//                              readln.
-//
-//  Return: ptr to the dummy type object
-//--------------------------------------------------------------
+            case TRoutineCode.RcAbs:
+            case TRoutineCode.RcSqr:
+            return EmitAbsSqrCall(pRoutineId);
 
-//endfig
+            case TRoutineCode.RcArctan:
+            case TRoutineCode.RcCos:
+            case TRoutineCode.RcExp:
+            case TRoutineCode.RcLn:
+            case TRoutineCode.RcSin:
+            case TRoutineCode.RcSqrt:
+            return EmitArctanCosExpLnSinSqrtCall(pRoutineId);
 
-//--------------------------------------------------------------
-//  EmitWriteWritelnCall        Emit code for a call to write or
-//                              writeln.
-//
-//  Return: ptr to the dummy type object
-//--------------------------------------------------------------
+            case TRoutineCode.RcPred:
+            case TRoutineCode.RcSucc:
+            return EmitPredSuccCall(pRoutineId);
 
+            case TRoutineCode.RcChr:
+            return EmitChrCall();
+            case TRoutineCode.RcOdd:
+            return EmitOddCall();
+            case TRoutineCode.RcOrd:
+            return EmitOrdCall();
 
-//fig 14-20
-//--------------------------------------------------------------
-//  EmitEofEolnCall         Emit code for a call to eof or eoln.
-//
-//  Return: ptr to the boolean type object
-//--------------------------------------------------------------
+            case TRoutineCode.RcRound:
+            case TRoutineCode.RcTrunc:
+            return EmitRoundTruncCall(pRoutineId);
 
+            default:
+            return pDummyType;
+        }
+    }
 
-//--------------------------------------------------------------
-//  EmitAbsSqrCall           Emit code for a call to abs or sqr.
-//
-//  Return: ptr to the result's type object
-//--------------------------------------------------------------
+    //--------------------------------------------------------------
+    //  EmitReadReadlnCall          Emit code for a call to read or
+    //                              readln.
+    //
+    //  Return: ptr to the dummy type object
+    //--------------------------------------------------------------
+    public TType EmitReadReadlnCall ( TSymtabNode pRoutineId )
+    {
+        //--Actual parameters are optional for readln.
+        GetToken();
+        if (token == TTokenCode.TcLParen)
+        {
 
+            //--Loop to emit code to read each parameter value.
+            do
+            {
+                //--Variable
+                GetToken();
+                TSymtabNode pVarId = pNode;
+                TType pVarType = EmitVariable(pVarId, true).Base();
 
-//--------------------------------------------------------------
-//  EmitArctanCosExpLnSinSqrtCall       Emit code for a call to
-//                                      arctan, cos, exp, ln,
-//                                      sin, or sqrt.
-//
-//  Return: ptr to the real type object
-//--------------------------------------------------------------
+                //--Read the value.
+                if (pVarType == pIntegerType)
+                {
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.ReadInteger);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Pop);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Bx);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Mov);
+                        pAsmBuffer.Put('\t');
+                        WordIndirect(TRegister.Bx);
+                        pAsmBuffer.Put(',');
+                        Reg(TRegister.Ax);
+                        pAsmBuffer.PutLine();
+                    };
+                } else if (pVarType == pRealType)
+                {
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.ReadReal);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Pop);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Bx);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Mov);
+                        pAsmBuffer.Put('\t');
+                        WordIndirect(TRegister.Bx);
+                        pAsmBuffer.Put(',');
+                        Reg(TRegister.Ax);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Mov);
+                        pAsmBuffer.Put('\t');
+                        HighDWordIndirect(TRegister.Bx);
+                        pAsmBuffer.Put(',');
+                        Reg(TRegister.Dx);
+                        pAsmBuffer.PutLine();
+                    };
+                } else if (pVarType == pCharType)
+                {
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.ReadChar);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Pop);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Bx);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Mov);
+                        pAsmBuffer.Put('\t');
+                        ByteIndirect(TRegister.Bx);
+                        pAsmBuffer.Put(',');
+                        Reg(TRegister.Al);
+                        pAsmBuffer.PutLine();
+                    };
+                }
+            } while (token == TTokenCode.TcComma);
 
+            GetToken(); // token after )
+        }
 
-//--------------------------------------------------------------
-//  EmitPredSuccCall            Emit code for a call to pred
-//                              or succ.
-//
-//  Return: ptr to the result's type object
-//--------------------------------------------------------------
+        //--Skip the rest of the input line if readln.
+        if (pRoutineId.defn.routine.which == TRoutineCode.RcReadln)
+        {
+            {
+                Operator(TInstruction.Call);
+                pAsmBuffer.Put('\t');
+                NameLit(DefineConstants.ReadLine);
+                pAsmBuffer.PutLine();
+            };
+        }
 
+        return pDummyType;
+    }
 
-//--------------------------------------------------------------
-//  EmitChrCall                 Emit code for a call to chr.
-//
-//  Return: ptr to the character type object
-//--------------------------------------------------------------
+    //--------------------------------------------------------------
+    //  EmitWriteWritelnCall        Emit code for a call to write or
+    //                              writeln.
+    //
+    //  Return: ptr to the dummy type object
+    //--------------------------------------------------------------
+    public TType EmitWriteWritelnCall ( TSymtabNode pRoutineId )
+    {
+        const int defaultFieldWidth = 10;
+        const int defaultPrecision = 2;
 
+        //--Actual parameters are optional for writeln.
+        GetToken();
+        if (token == TTokenCode.TcLParen)
+        {
 
-//--------------------------------------------------------------
-//  EmitOddCall                 Emit code for a call to odd.
-//
-//  Return: ptr to the boolean type object
-//--------------------------------------------------------------
+            //--Loop to emit code for each parameter value.
+            do
+            {
+                //--<expr-1>
+                GetToken();
+                TType pExprType = EmitExpression().Base();
 
+                //--Push the scalar value to be written onto the stack.
+                //--A string value is already on the stack.
+                if (pExprType.form != TFormCode.FcArray)
+                    EmitPushOperand(pExprType);
 
-//--------------------------------------------------------------
-//  EmitOrdCall                 Emit code for a call to ord.
-//
-//  Return: ptr to the integer type object
-//--------------------------------------------------------------
+                if (token == TTokenCode.TcColon)
+                {
 
+                    //--Field width <expr-2>
+                    //--Push its value onto the stack.
+                    GetToken();
+                    EmitExpression();
+                    {
+                        Operator(TInstruction.Push);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Ax);
+                        pAsmBuffer.PutLine();
+                    };
 
-//--------------------------------------------------------------
-//  EmitRoundTruncCall          Emit code for a call to round
-//                              or trunc.
-//
-//  Return: ptr to the integer type object
-//--------------------------------------------------------------
+                    if (token == TTokenCode.TcColon)
+                    {
 
-//endfig
+                        //--Precision <expr-3>
+                        //--Push its value onto the stack.
+                        GetToken();
+                        EmitExpression();
+                        {
+                            Operator(TInstruction.Push);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.PutLine();
+                        };
+                    } else if (pExprType == pRealType)
+                    {
+
+                        {
+                            //--No precision: Push the default precision.
+                            Operator(TInstruction.Mov);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.Put(',');
+                            IntegerLit(defaultPrecision);
+                            pAsmBuffer.PutLine();
+                        };
+                        {
+                            Operator(TInstruction.Push);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.PutLine();
+                        };
+                    }
+                } else
+                {
+
+                    //--No field width: Push the default field width and
+                    //--                the default precision.
+                    if (pExprType == pIntegerType)
+                    {
+                        {
+                            Operator(TInstruction.Mov);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.Put(',');
+                            IntegerLit(defaultFieldWidth);
+                            pAsmBuffer.PutLine();
+                        };
+                        {
+                            Operator(TInstruction.Push);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.PutLine();
+                        };
+                    } else if (pExprType == pRealType)
+                    {
+                        {
+                            Operator(TInstruction.Mov);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.Put(',');
+                            IntegerLit(defaultFieldWidth);
+                            pAsmBuffer.PutLine();
+                        };
+                        {
+                            Operator(TInstruction.Push);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.PutLine();
+                        };
+                        {
+                            Operator(TInstruction.Mov);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.Put(',');
+                            IntegerLit(defaultPrecision);
+                            pAsmBuffer.PutLine();
+                        };
+                        {
+                            Operator(TInstruction.Push);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.PutLine();
+                        };
+                    } else
+                    {
+                        {
+                            Operator(TInstruction.Mov);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.Put(',');
+                            IntegerLit(0);
+                            pAsmBuffer.PutLine();
+                        };
+                        {
+                            Operator(TInstruction.Push);
+                            pAsmBuffer.Put('\t');
+                            Reg(TRegister.Ax);
+                            pAsmBuffer.PutLine();
+                        };
+                    }
+                }
+
+                //--Emit the code to write the value.
+                if (pExprType == pIntegerType)
+                {
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.WriteInteger);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Add);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Sp);
+                        pAsmBuffer.Put(',');
+                        IntegerLit(4);
+                        pAsmBuffer.PutLine();
+                    };
+                } else if (pExprType == pRealType)
+                {
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.WriteReal);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Add);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Sp);
+                        pAsmBuffer.Put(',');
+                        IntegerLit(8);
+                        pAsmBuffer.PutLine();
+                    };
+                } else if (pExprType == pBooleanType)
+                {
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.WriteBoolean);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Add);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Sp);
+                        pAsmBuffer.Put(',');
+                        IntegerLit(4);
+                        pAsmBuffer.PutLine();
+                    };
+                } else if (pExprType == pCharType)
+                {
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.WriteChar);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Add);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Sp);
+                        pAsmBuffer.Put(',');
+                        IntegerLit(4);
+                        pAsmBuffer.PutLine();
+                    };
+                } else
+                { // string
+
+                    {
+                        //--Push the string length onto the stack.
+                        Operator(TInstruction.Mov);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Ax);
+                        pAsmBuffer.Put(',');
+                        IntegerLit(pExprType.array.elmtCount);
+                        pAsmBuffer.PutLine();
+                    };
+
+                    {
+                        Operator(TInstruction.Push);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Ax);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Call);
+                        pAsmBuffer.Put('\t');
+                        NameLit(DefineConstants.WriteString);
+                        pAsmBuffer.PutLine();
+                    };
+                    {
+                        Operator(TInstruction.Add);
+                        pAsmBuffer.Put('\t');
+                        Reg(TRegister.Sp);
+                        pAsmBuffer.Put(',');
+                        IntegerLit(6);
+                        pAsmBuffer.PutLine();
+                    };
+                }
+
+            } while (token == TTokenCode.TcComma);
+
+            GetToken(); // token after )
+        }
+
+        //--End the line if writeln.
+        if (pRoutineId.defn.routine.which == TRoutineCode.RcWriteln)
+        {
+            {
+                Operator(TInstruction.Call);
+                pAsmBuffer.Put('\t');
+                NameLit(DefineConstants.WriteLine);
+                pAsmBuffer.PutLine();
+            };
+        }
+
+        return pDummyType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitEofEolnCall         Emit code for a call to eof or eoln.
+    //
+    //  Return: ptr to the boolean type object
+    //--------------------------------------------------------------
+    public TType EmitEofEolnCall ( TSymtabNode pRoutineId )
+    {
+        {
+            Operator(TInstruction.Call);
+            pAsmBuffer.Put('\t');
+            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcEof) != 0 ? DefineConstants.StdEof : DefineConstants.StdEoln);
+            pAsmBuffer.PutLine();
+        };
+
+        GetToken(); // token after function name
+        return pBooleanType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitAbsSqrCall           Emit code for a call to abs or sqr.
+    //
+    //  Return: ptr to the result's type object
+    //--------------------------------------------------------------
+    public TType EmitAbsSqrCall ( TSymtabNode pRoutineId )
+    {
+        GetToken(); // (
+        GetToken();
+
+        TType pParmType = EmitExpression().Base();
+
+        switch (pRoutineId.defn.routine.which)
+        {
+
+            case TRoutineCode.RcAbs:
+            if (pParmType == pIntegerType)
+            {
+                int nonNegativeLabelIndex = ++asmLabelIndex;
+
+                {
+                    Operator(TInstruction.Cmp);
+                    pAsmBuffer.Put('\t');
+                    Reg(TRegister.Ax);
+                    pAsmBuffer.Put(',');
+                    IntegerLit(0);
+                    pAsmBuffer.PutLine();
+                };
+                {
+                    Operator(TInstruction.Jge);
+                    pAsmBuffer.Put('\t');
+                    Label(DefineConstants.StmtLabelPrefix, nonNegativeLabelIndex);
+                    pAsmBuffer.PutLine();
+                };
+                {
+                    Operator(TInstruction.Neg);
+                    pAsmBuffer.Put('\t');
+                    Reg(TRegister.Ax);
+                    pAsmBuffer.PutLine();
+                };
+
+                EmitStatementLabel(nonNegativeLabelIndex);
+            } else
+            {
+                EmitPushOperand(pParmType);
+                {
+                    Operator(TInstruction.Call);
+                    pAsmBuffer.Put('\t');
+                    NameLit(DefineConstants.StdAbs);
+                    pAsmBuffer.PutLine();
+                };
+                {
+                    Operator(TInstruction.Add);
+                    pAsmBuffer.Put('\t');
+                    Reg(TRegister.Sp);
+                    pAsmBuffer.Put(',');
+                    IntegerLit(4);
+                    pAsmBuffer.PutLine();
+                };
+            }
+            break;
+
+            case TRoutineCode.RcSqr:
+            if (pParmType == pIntegerType)
+            {
+                {
+                    Operator(TInstruction.Mov);
+                    pAsmBuffer.Put('\t');
+                    Reg(TRegister.Dx);
+                    pAsmBuffer.Put(',');
+                    Reg(TRegister.Ax);
+                    pAsmBuffer.PutLine();
+                };
+                {
+                    Operator(TInstruction.Imul);
+                    pAsmBuffer.Put('\t');
+                    Reg(TRegister.Dx);
+                    pAsmBuffer.PutLine();
+                };
+            } else
+            {
+                EmitPushOperand(pParmType);
+                EmitPushOperand(pParmType);
+                {
+                    Operator(TInstruction.Call);
+                    pAsmBuffer.Put('\t');
+                    NameLit(DefineConstants.FloatMultiply);
+                    pAsmBuffer.PutLine();
+                };
+                {
+                    Operator(TInstruction.Add);
+                    pAsmBuffer.Put('\t');
+                    Reg(TRegister.Sp);
+                    pAsmBuffer.Put(',');
+                    IntegerLit(8);
+                    pAsmBuffer.PutLine();
+                };
+            }
+            break;
+        }
+
+        GetToken(); // token after )
+        return pParmType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitArctanCosExpLnSinSqrtCall       Emit code for a call to
+    //                                      arctan, cos, exp, ln,
+    //                                      sin, or sqrt.
+    //
+    //  Return: ptr to the real type object
+    //--------------------------------------------------------------
+    public TType EmitArctanCosExpLnSinSqrtCall ( TSymtabNode pRoutineId )
+    {
+        string stdFuncName;
+
+        GetToken(); // (
+        GetToken();
+
+        //--Evaluate the parameter, and convert an integer value to
+        //--real if necessary.
+        TType pParmType = EmitExpression().Base();
+        if (pParmType == pIntegerType)
+        {
+            {
+                Operator(TInstruction.Push);
+                pAsmBuffer.Put('\t');
+                Reg(TRegister.Ax);
+                pAsmBuffer.PutLine();
+            };
+            {
+                Operator(TInstruction.Call);
+                pAsmBuffer.Put('\t');
+                NameLit(DefineConstants.FloatConvert);
+                pAsmBuffer.PutLine();
+            };
+            {
+                Operator(TInstruction.Add);
+                pAsmBuffer.Put('\t');
+                Reg(TRegister.Sp);
+                pAsmBuffer.Put(',');
+                IntegerLit(2);
+                pAsmBuffer.PutLine();
+            };
+        }
+
+        EmitPushOperand(pRealType);
+
+        switch (pRoutineId.defn.routine.which)
+        {
+            case TRoutineCode.RcArctan:
+            stdFuncName = DefineConstants.StdArctan;
+            break;
+            case TRoutineCode.RcCos:
+            stdFuncName = DefineConstants.StdCos;
+            break;
+            case TRoutineCode.RcExp:
+            stdFuncName = DefineConstants.StdExp;
+            break;
+            case TRoutineCode.RcLn:
+            stdFuncName = DefineConstants.StdLn;
+            break;
+            case TRoutineCode.RcSin:
+            stdFuncName = DefineConstants.StdSin;
+            break;
+            case TRoutineCode.RcSqrt:
+            stdFuncName = DefineConstants.StdSqrt;
+            break;
+        }
+
+        {
+            Operator(TInstruction.Call);
+            pAsmBuffer.Put('\t');
+            NameLit(stdFuncName);
+            pAsmBuffer.PutLine();
+        };
+        {
+            Operator(TInstruction.Add);
+            pAsmBuffer.Put('\t');
+            Reg(TRegister.Sp);
+            pAsmBuffer.Put(',');
+            IntegerLit(4);
+            pAsmBuffer.PutLine();
+        };
+
+        GetToken(); // token after )
+        return pRealType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitPredSuccCall            Emit code for a call to pred
+    //                              or succ.
+    //
+    //  Return: ptr to the result's type object
+    //--------------------------------------------------------------
+    public TType EmitPredSuccCall ( TSymtabNode pRoutineId )
+    {
+        GetToken(); // (
+        GetToken();
+
+        TType pParmType = EmitExpression();
+
+        {
+            Operator(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcPred) != 0 ? TInstruction.Decr : TInstruction.Incr);
+            pAsmBuffer.Put('\t');
+            Reg(TRegister.Ax);
+            pAsmBuffer.PutLine();
+        };
+
+        GetToken(); // token after )
+        return pParmType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitChrCall                 Emit code for a call to chr.
+    //
+    //  Return: ptr to the character type object
+    //--------------------------------------------------------------
+    public TType EmitChrCall ()
+    {
+        GetToken(); // (
+        GetToken();
+        EmitExpression();
+
+        GetToken(); // token after )
+        return pCharType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitOddCall                 Emit code for a call to odd.
+    //
+    //  Return: ptr to the boolean type object
+    //--------------------------------------------------------------
+    public TType EmitOddCall ()
+    {
+        GetToken(); // (
+        GetToken();
+        EmitExpression();
+
+        {
+            Operator(TInstruction.And);
+            pAsmBuffer.Put('\t');
+            Reg(TRegister.Ax);
+            pAsmBuffer.Put(',');
+            IntegerLit(1);
+            pAsmBuffer.PutLine();
+        };
+
+        GetToken(); // token after )
+        return pBooleanType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitOrdCall                 Emit code for a call to ord.
+    //
+    //  Return: ptr to the integer type object
+    //--------------------------------------------------------------
+    public TType EmitOrdCall ()
+    {
+        GetToken(); // (
+        GetToken();
+        EmitExpression();
+
+        GetToken(); // token after )
+        return pIntegerType;
+    }
+
+    //--------------------------------------------------------------
+    //  EmitRoundTruncCall          Emit code for a call to round
+    //                              or trunc.
+    //
+    //  Return: ptr to the integer type object
+    //--------------------------------------------------------------
+    public TType EmitRoundTruncCall ( TSymtabNode pRoutineId )
+    {
+        GetToken(); // (
+        GetToken();
+        EmitExpression();
+
+        EmitPushOperand(pRealType);
+        {
+            Operator(TInstruction.Call);
+            pAsmBuffer.Put('\t');
+            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcRound) != 0 ? DefineConstants.StdRound : DefineConstants.StdTrunc);
+            pAsmBuffer.PutLine();
+        };
+        {
+            Operator(TInstruction.Add);
+            pAsmBuffer.Put('\t');
+            Reg(TRegister.Sp);
+            pAsmBuffer.Put(',');
+            IntegerLit(4);
+            pAsmBuffer.PutLine();
+        };
+
+        GetToken(); // token after )
+        return pIntegerType;
+    }
+}

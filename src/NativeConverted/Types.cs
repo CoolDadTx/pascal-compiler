@@ -1,7 +1,6 @@
 ﻿//--------------------------------------------------------------
 //  TFormCode           Form code: What form of data structure.
 //--------------------------------------------------------------
-
 public enum TFormCode
 {
 	FcNone,
@@ -15,7 +14,6 @@ public enum TFormCode
 //--------------------------------------------------------------
 //  TType               Type class.
 //--------------------------------------------------------------
-
 public class TType : System.IDisposable
 {
 	private int refCount; // reference count
@@ -109,11 +107,11 @@ public class TType : System.IDisposable
 
 		array.pIndexType = array.pElmtType = null;
 		SetType( ref array.pIndexType, new TType( TFormCode.FcSubrange, sizeof( int ), null ) );
-		SetType( ref array.pElmtType, GlobalMembers.pCharType );
+		SetType( ref array.pElmtType, Globals.pCharType );
 		array.elmtCount = length;
 
 		//--Integer subrange index type, range 1..length
-		SetType( ref array.pIndexType.subrange.pBaseType, GlobalMembers.pIntegerType );
+		SetType( ref array.pIndexType.subrange.pBaseType, Globals.pIntegerType );
 		array.pIndexType.subrange.min = 1;
 		array.pIndexType.subrange.max = length;
 	}
@@ -158,15 +156,11 @@ public class TType : System.IDisposable
 	   }
    }
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: int IsScalar() const
 	public int IsScalar()
 	{
 		return ( form != TFormCode.FcArray ) && ( form != TFormCode.FcRecord );
 	}
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: TType *Base() const
 	public TType Base()
 	{
 	return form == ( ( int )TFormCode.FcSubrange ) != 0 ? subrange.pBaseType : ( TType ) this;
@@ -186,12 +180,10 @@ public class TType : System.IDisposable
 	//      vc : vcVerbose or vcTerse to control the output
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintTypeSpec(TVerbosityCode vc) const
 	public void PrintTypeSpec( TVerbosityCode vc )
 	{
 		//--Type form and size
-		list.text = string.Format( "{0}, size {1:D} bytes.  Type identifier: ", GlobalMembers.formStrings[( int )form], size );
+		list.text = String.Format( "{0}, size {1:D} bytes.  Type identifier: ", Globals.formStrings[( int )form], size );
 
 		//--Type identifier
 		if ( pTypeId != null )
@@ -228,8 +220,6 @@ public class TType : System.IDisposable
 	//      vc : vcVerbose or vcTerse to control the output
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintEnumType(TVerbosityCode vc) const
 	public void PrintEnumType( TVerbosityCode vc )
 	{
 		if ( vc == TVerbosityCode.VcTerse )
@@ -240,7 +230,7 @@ public class TType : System.IDisposable
 		list.PutLine( "--- Enumeration Constant Identifiers " + "(value = name) ---" );
 		for ( TSymtabNode * pConstId = enumeration.pConstIds; pConstId != null; pConstId = pConstId.next )
 		{
-		list.text = string.Format( "    {0:D} = {1}", pConstId.defn.constant.value.integer, pConstId.String() );
+		list.text = String.Format( "    {0:D} = {1}", pConstId.defn.constant.value.integer, pConstId.String() );
 		list.PutLine();
 		}
 	}
@@ -252,15 +242,13 @@ public class TType : System.IDisposable
 	//      vc : vcVerbose or vcTerse to control the output
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintSubrangeType(TVerbosityCode vc) const
 	public void PrintSubrangeType( TVerbosityCode vc )
 	{
 		if ( vc == TVerbosityCode.VcTerse )
 			return;
 
 		//--Subrange minimum and maximum values
-		list.text = string.Format( "Minimum value = {0:D}, maximum value = {1:D}", subrange.min, subrange.max );
+		list.text = String.Format( "Minimum value = {0:D}, maximum value = {1:D}", subrange.min, subrange.max );
 		list.PutLine();
 
 		//--Base range type
@@ -278,15 +266,13 @@ public class TType : System.IDisposable
 	//      vc : vcVerbose or vcTerse to control the output
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintArrayType(TVerbosityCode vc) const
 	public void PrintArrayType( TVerbosityCode vc )
 	{
 		if ( vc == TVerbosityCode.VcTerse )
 			return;
 
 		//--Element count
-		list.text = string.Format( "{0:D} elements", array.elmtCount );
+		list.text = String.Format( "{0:D} elements", array.elmtCount );
 		list.PutLine();
 
 		//--Index type
@@ -311,8 +297,6 @@ public class TType : System.IDisposable
 	//      vc : vcVerbose or vcTerse to control the output
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER WARNING: 'const' methods are not available in C#:
-//ORIGINAL LINE: void PrintRecordType(TVerbosityCode vc) const
 	public void PrintRecordType( TVerbosityCode vc )
 	{
 		if ( vc == TVerbosityCode.VcTerse )
@@ -323,7 +307,7 @@ public class TType : System.IDisposable
 		list.PutLine();
 		for ( TSymtabNode * pFieldId = record.pSymtab.Root(); pFieldId != null; pFieldId = pFieldId.next )
 		{
-		list.text = string.Format( "    {0:D} : {1}", pFieldId.defn.data.offset, pFieldId.String() );
+		list.text = String.Format( "    {0:D} : {1}", pFieldId.defn.data.offset, pFieldId.String() );
 		list.PutLine();
 		pFieldId.PrintVarOrField();
 		}
@@ -397,11 +381,11 @@ public class TType : System.IDisposable
 		return;
 
 		//--One integer operand and one real operand.
-		if ( ( ( pType1 == GlobalMembers.pIntegerType ) && ( pType2 == GlobalMembers.pRealType ) ) || ( ( pType2 == GlobalMembers.pIntegerType ) && ( pType1 == GlobalMembers.pRealType ) ) )
+		if ( ( ( pType1 == Globals.pIntegerType ) && ( pType2 == Globals.pRealType ) ) || ( ( pType2 == Globals.pIntegerType ) && ( pType1 == Globals.pRealType ) ) )
 		return;
 
 		//--Two strings of the same length.
-		if ( ( pType1.form == TFormCode.FcArray ) && ( pType2.form == TFormCode.FcArray ) && ( pType1.array.pElmtType == GlobalMembers.pCharType ) && ( pType2.array.pElmtType == GlobalMembers.pCharType ) && ( pType1.array.elmtCount == pType2.array.elmtCount ) )
+		if ( ( pType1.form == TFormCode.FcArray ) && ( pType2.form == TFormCode.FcArray ) && ( pType1.array.pElmtType == Globals.pCharType ) && ( pType2.array.pElmtType == Globals.pCharType ) && ( pType1.array.elmtCount == pType2.array.elmtCount ) )
 		return;
 
 		//--Else:  Incompatible types.
@@ -420,13 +404,13 @@ public class TType : System.IDisposable
 	public void CheckIntegerOrReal( TType pType1, TType pType2 = null )
 	{
 		pType1 = pType1.Base();
-		if ( ( pType1 != GlobalMembers.pIntegerType ) && ( pType1 != GlobalMembers.pRealType ) )
+		if ( ( pType1 != Globals.pIntegerType ) && ( pType1 != Globals.pRealType ) )
 		Error( TErrorCode.ErrIncompatibleTypes );
 
 		if ( pType2 != null )
 		{
 		pType2 = pType2.Base();
-		if ( ( pType2 != GlobalMembers.pIntegerType ) && ( pType2 != GlobalMembers.pRealType ) )
+		if ( ( pType2 != Globals.pIntegerType ) && ( pType2 != Globals.pRealType ) )
 			Error( TErrorCode.ErrIncompatibleTypes );
 		}
 	}
@@ -442,7 +426,7 @@ public class TType : System.IDisposable
 
 	public void CheckBoolean( TType pType1, TType pType2 = null )
 	{
-		if ( ( pType1.Base() != GlobalMembers.pBooleanType ) || (pType2 != null && (pType2.Base() != GlobalMembers.pBooleanType)) )
+		if ( ( pType1.Base() != Globals.pBooleanType ) || (pType2 != null && (pType2.Base() != Globals.pBooleanType)) )
 		Error( TErrorCode.ErrIncompatibleTypes );
 	}
 
@@ -467,12 +451,12 @@ public class TType : System.IDisposable
 			return;
 
 		//--real := integer
-		if ( ( pTargetType == GlobalMembers.pRealType ) && ( pValueType == GlobalMembers.pIntegerType ) )
+		if ( ( pTargetType == Globals.pRealType ) && ( pValueType == Globals.pIntegerType ) )
 			return;
 
 
 		//--Two strings of the same length.
-		if ( ( pTargetType.form == TFormCode.FcArray ) && ( pValueType.form == TFormCode.FcArray ) && ( pTargetType.array.pElmtType == GlobalMembers.pCharType ) && ( pValueType.array.pElmtType == GlobalMembers.pCharType ) && ( pTargetType.array.elmtCount == pValueType.array.elmtCount ) )
+		if ( ( pTargetType.form == TFormCode.FcArray ) && ( pValueType.form == TFormCode.FcArray ) && ( pTargetType.array.pElmtType == Globals.pCharType ) && ( pValueType.array.pElmtType == Globals.pCharType ) && ( pTargetType.array.elmtCount == pValueType.array.elmtCount ) )
 		return;
 
 		Error( ec );
@@ -494,7 +478,7 @@ public class TType : System.IDisposable
 		pType1 = pType1.Base();
 		pType2 = pType2.Base();
 
-		return ( pType1 == GlobalMembers.pIntegerType ) && ( pType2 == GlobalMembers.pIntegerType );
+		return ( pType1 == Globals.pIntegerType ) && ( pType2 == Globals.pIntegerType );
 	}
 
 	//--------------------------------------------------------------
@@ -513,6 +497,6 @@ public class TType : System.IDisposable
 		pType1 = pType1.Base();
 		pType2 = pType2.Base();
 
-		return ( ( pType1 == GlobalMembers.pRealType ) && ( pType2 == GlobalMembers.pRealType ) ) || ( ( pType1 == GlobalMembers.pRealType ) && ( pType2 == GlobalMembers.pIntegerType ) ) || ( ( pType2 == GlobalMembers.pRealType ) && ( pType1 == GlobalMembers.pIntegerType ) );
+		return ( ( pType1 == Globals.pRealType ) && ( pType2 == Globals.pRealType ) ) || ( ( pType1 == Globals.pRealType ) && ( pType2 == Globals.pIntegerType ) ) || ( ( pType2 == Globals.pRealType ) && ( pType1 == Globals.pIntegerType ) );
 	}
 }

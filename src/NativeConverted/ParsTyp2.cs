@@ -1,5 +1,4 @@
-﻿//fig 7-14
-//  *************************************************************
+﻿//  *************************************************************
 //  *                                                           *
 //  *   P A R S E R   (Types #2)                                *
 //  *                                                           *
@@ -15,58 +14,151 @@
 //  *   For instructional purposes only.  No warranties.        *
 //  *                                                           *
 //  *************************************************************
+partial class TParser
+{
+    //--------------------------------------------------------------
+    //  ParseArrayType      Parse an array type specification:
+    //
+    //                          ARRAY [ <index-type-list> ]
+    //                              OF <elmt-type>
+    //
+    //  Return: ptr to type object
+    //--------------------------------------------------------------
+    public TType ParseArrayType ()
+    {
+        TType pArrayType = new TType(TFormCode.FcArray, 0, null);
+        TType pElmtType = pArrayType;
+        int indexFlag; // true if another array index, false if done
 
+        //-- [
+        GetToken();
+        CondGetToken(TTokenCode.TcLBracket, TErrorCode.ErrMissingLeftBracket);
 
+        //--Loop to parse each type spec in the index type list,
+        //--seperated by commas.
+        do
+        {
+            ParseIndexType(pElmtType);
 
-//              ****************
-//              *              *
-//              *  Array Type  *
-//              *              *
-//              ****************
+            //-- ,
+            Resync(tlIndexFollow, tlIndexStart);
+            if ((token == TTokenCode.TcComma) || TokenIn(token, tlIndexStart) != 0)
+            {
 
-//--------------------------------------------------------------
-//  ParseArrayType      Parse an array type specification:
-//
-//                          ARRAY [ <index-type-list> ]
-//                              OF <elmt-type>
-//
-//  Return: ptr to type object
-//--------------------------------------------------------------
+                //--For each type spec after the first, create an
+                //--element type object.
+                pElmtType = SetType(pElmtType.array.pElmtType, new TType(TFormCode.FcArray, 0, null));
+                CondGetToken(TTokenCode.TcComma, TErrorCode.ErrMissingComma);
+                indexFlag = true;
+            } else
+            {
+                indexFlag = false;
+            }
 
+        } while (indexFlag != 0);
 
-//--------------------------------------------------------------
-//  ParseIndexType      Parse an array index type.
-//
-//      pArrayType : ptr to array type object
-//--------------------------------------------------------------
+        //-- ]
+        CondGetToken(TTokenCode.TcRBracket, TErrorCode.ErrMissingRightBracket);
 
+        //--OF
+        Resync(tlIndexListFollow, tlDeclarationStart, tlStatementStart);
+        CondGetToken(TTokenCode.TcOF, TErrorCode.ErrMissingOF);
 
-//--------------------------------------------------------------
-//  ArraySize           Calculate the total byte size of an
-//                      array type by recursively calculating
-//                      the size of each dimension.
-//
-//      pArrayType : ptr to array type object
-//
-//  Return: byte size
-//--------------------------------------------------------------
+        //--Final element type.
+        SetType(pElmtType.array.pElmtType, ParseTypeSpec());
 
+        //--Total byte size of the array.
+        if (pArrayType.form != TFormCode.FcNone)
+            pArrayType.size = ArraySize(pArrayType);
 
-//              *****************
-//              *               *
-//              *  Record Type  *
-//              *               *
-//              *****************
+        return pArrayType;
+    }
 
-//--------------------------------------------------------------
-//  ParseRecordType     Parse a record type specification:
-//
-//                          RECORD
-//                              <id-list> : <type> ;
-//                              ...
-//                          END
-//
-//  Return: ptr to type object
-//--------------------------------------------------------------
+    //--------------------------------------------------------------
+    //  ParseIndexType      Parse an array index type.
+    //
+    //      pArrayType : ptr to array type object
+    //--------------------------------------------------------------
+    public void ParseIndexType ( TType pArrayType )
+    {
+        if (TokenIn(token, tlIndexStart) != 0)
+        {
+            TType pIndexType = ParseTypeSpec();
+            SetType(pArrayType.array.pIndexType, pIndexType);
 
-//endfig
+            switch (pIndexType.form)
+            {
+
+                //--Subrange index type
+                case TFormCode.FcSubrange:
+                pArrayType.array.elmtCount = pIndexType.subrange.max - pIndexType.subrange.min + 1;
+                pArrayType.array.minIndex = pIndexType.subrange.min;
+                pArrayType.array.maxIndex = pIndexType.subrange.max;
+                return;
+
+                //--Enumeration index type
+                case TFormCode.FcEnum:
+                pArrayType.array.elmtCount = pIndexType.enumeration.max + 1;
+                pArrayType.array.minIndex = 0;
+                pArrayType.array.maxIndex = pIndexType.enumeration.max;
+                return;
+
+                //--Error
+                default:
+                goto BadIndexType;
+            }
+        }
+
+BadIndexType:
+
+//--Error
+        SetType(pArrayType.array.pIndexType, pDummyType);
+        pArrayType.array.elmtCount = 0;
+        pArrayType.array.minIndex = pArrayType.array.maxIndex = 0;
+        Error(TErrorCode.ErrInvalidIndexType);
+    }
+
+    //--------------------------------------------------------------
+    //  ArraySize           Calculate the total byte size of an
+    //                      array type by recursively calculating
+    //                      the size of each dimension.
+    //
+    //      pArrayType : ptr to array type object
+    //
+    //  Return: byte size
+    //--------------------------------------------------------------
+    public int ArraySize ( TType pArrayType )
+    {
+        //--Calculate the size of the element type
+        //--if it hasn't already been calculated.
+        if (pArrayType.array.pElmtType.size == 0)
+            pArrayType.array.pElmtType.size = ArraySize(pArrayType.array.pElmtType);
+
+        return (pArrayType.array.elmtCount * pArrayType.array.pElmtType.size);
+    }
+    
+    //--------------------------------------------------------------
+    //  ParseRecordType     Parse a record type specification:
+    //
+    //                          RECORD
+    //                              <id-list> : <type> ;
+    //                              ...
+    //                          END
+    //
+    //  Return: ptr to type object
+    //--------------------------------------------------------------
+    public TType ParseRecordType ()
+    {
+        TType pType = new TType(TFormCode.FcRecord, 0, null);
+        pType.record.pSymtab = new TSymtab();
+
+        //--Parse field declarations.
+        GetToken();
+        ParseFieldDeclarations(pType, 0);
+
+        //--END
+        CondGetToken(TTokenCode.TcEND, TErrorCode.ErrMissingEND);
+
+        return pType;
+    }
+}

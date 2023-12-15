@@ -15,32 +15,12 @@
 //  *                                                           *
 //  *************************************************************
 
-//fig 3-5
-//  *************************************************************
-//  *                                                           *
-//  *   S C A N N E R   (Header)                                *
-//  *                                                           *
-//  *   CLASSES: TScanner, TTextScanner                         *
-//  *                                                           *
-//  *   FILE:    prog3-1/scanner.h                              *
-//  *                                                           *
-//  *   MODULE:  Scanner                                        *
-//  *                                                           *
-//  *   Copyright (c) 1996 by Ronald Mak                        *
-//  *   For instructional purposes only.  No warranties.        *
-//  *                                                           *
-//  *************************************************************
-
-
-
 //--------------------------------------------------------------
 //  TScanner            Abstract scanner class.
 //--------------------------------------------------------------
 
-public abstract class TScanner : System.IDisposable
+public abstract class TScanner : IDisposable
 {
-
-
 	//--Tokens extracted and returned by the scanner.
 	protected TWordToken wordToken = new TWordToken();
 	protected TNumberToken numberToken = new TNumberToken();
@@ -66,7 +46,6 @@ public class TTextScanner : TScanner
 					 //   to scan
 
 
-	//fig 3-16
 	//--------------------------------------------------------------
 	//  SkipWhiteSpace      Repeatedly fetch characters from the
 	//                      text input as long as they're
@@ -80,7 +59,7 @@ public class TTextScanner : TScanner
 
 		do
 		{
-		if ( GlobalMembers.charCodeMap[ch] == TCharCode.CcWhiteSpace )
+		if ( Globals.charCodeMap[ch] == TCharCode.CcWhiteSpace )
 
 			//--Saw a whitespace character:  fetch the next character.
 			ch = pTextInBuffer.GetChar();
@@ -96,7 +75,7 @@ public class TTextScanner : TScanner
 			else
 				Error( TErrorCode.ErrUnexpectedEndOfFile );
 		}
-		} while ( ( GlobalMembers.charCodeMap[ch] == TCharCode.CcWhiteSpace ) || ( ch == '{' ) );
+		} while ( ( Globals.charCodeMap[ch] == TCharCode.CcWhiteSpace ) || ( ch == '{' ) );
 	}
 
 
@@ -115,26 +94,26 @@ public class TTextScanner : TScanner
 
 		//--Initialize the character code map.
 		for ( i = 0; i < 128; ++i )
-			GlobalMembers.charCodeMap[i] = TCharCode.CcError;
+			Globals.charCodeMap[i] = TCharCode.CcError;
 		for ( i = 'a'; i <= 'z'; ++i )
-			GlobalMembers.charCodeMap[i] = TCharCode.CcLetter;
+			Globals.charCodeMap[i] = TCharCode.CcLetter;
 		for ( i = 'A'; i <= 'Z'; ++i )
-			GlobalMembers.charCodeMap[i] = TCharCode.CcLetter;
+			Globals.charCodeMap[i] = TCharCode.CcLetter;
 		for ( i = '0'; i <= '9'; ++i )
-			GlobalMembers.charCodeMap[i] = TCharCode.CcDigit;
-		GlobalMembers.charCodeMap['+'] = GlobalMembers.charCodeMap['-'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap['*'] = GlobalMembers.charCodeMap['/'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap['='] = GlobalMembers.charCodeMap['^'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap['.'] = GlobalMembers.charCodeMap[','] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap['<'] = GlobalMembers.charCodeMap['>'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap['('] = GlobalMembers.charCodeMap[')'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap['['] = GlobalMembers.charCodeMap[']'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap['{'] = GlobalMembers.charCodeMap['}'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap[':'] = GlobalMembers.charCodeMap[';'] = TCharCode.CcSpecial;
-		GlobalMembers.charCodeMap[' '] = GlobalMembers.charCodeMap['\t'] = TCharCode.CcWhiteSpace;
-		GlobalMembers.charCodeMap['\n'] = GlobalMembers.charCodeMap['\0'] = TCharCode.CcWhiteSpace;
-		GlobalMembers.charCodeMap['\''] = TCharCode.CcQuote;
-		GlobalMembers.charCodeMap[eofChar] = TCharCode.CcEndOfFile;
+			Globals.charCodeMap[i] = TCharCode.CcDigit;
+		Globals.charCodeMap['+'] = Globals.charCodeMap['-'] = TCharCode.CcSpecial;
+		Globals.charCodeMap['*'] = Globals.charCodeMap['/'] = TCharCode.CcSpecial;
+		Globals.charCodeMap['='] = Globals.charCodeMap['^'] = TCharCode.CcSpecial;
+		Globals.charCodeMap['.'] = Globals.charCodeMap[','] = TCharCode.CcSpecial;
+		Globals.charCodeMap['<'] = Globals.charCodeMap['>'] = TCharCode.CcSpecial;
+		Globals.charCodeMap['('] = Globals.charCodeMap[')'] = TCharCode.CcSpecial;
+		Globals.charCodeMap['['] = Globals.charCodeMap[']'] = TCharCode.CcSpecial;
+		Globals.charCodeMap['{'] = Globals.charCodeMap['}'] = TCharCode.CcSpecial;
+		Globals.charCodeMap[':'] = Globals.charCodeMap[';'] = TCharCode.CcSpecial;
+		Globals.charCodeMap[' '] = Globals.charCodeMap['\t'] = TCharCode.CcWhiteSpace;
+		Globals.charCodeMap['\n'] = Globals.charCodeMap['\0'] = TCharCode.CcWhiteSpace;
+		Globals.charCodeMap['\''] = TCharCode.CcQuote;
+		Globals.charCodeMap[eofChar] = TCharCode.CcEndOfFile;
 	}
 	public override void Dispose()
 	{
@@ -142,10 +121,8 @@ public class TTextScanner : TScanner
 			pTextInBuffer.Dispose();
 		base.Dispose();
 	}
-
-	//endfig
-
-	//--------------------------------------------------------------
+    
+    //--------------------------------------------------------------
 	//  Get         Extract the next token from the text input,
 	//              based on the current character.
 	//
@@ -159,7 +136,7 @@ public class TTextScanner : TScanner
 		SkipWhiteSpace();
 
 		//--Determine the token class, based on the current character.
-		switch ( GlobalMembers.charCodeMap[pTextInBuffer.Char()] )
+		switch ( Globals.charCodeMap[pTextInBuffer.Char()] )
 		{
 		case TCharCode.CcLetter:
 			pToken = wordToken;
