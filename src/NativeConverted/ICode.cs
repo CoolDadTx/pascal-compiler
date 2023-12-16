@@ -1,4 +1,7 @@
-﻿public class TIcode : TScanner
+﻿//--------------------------------------------------------------
+//  TIcode      Intermediate code subclass of TScanner.
+//--------------------------------------------------------------
+public class TIcode : TScanner
 {
 //C++ TO C# CONVERTER NOTE: Enums must be named in C#, so the following enum has been named AnonymousEnum:
 	private enum AnonymousEnum
@@ -22,7 +25,7 @@
 		if ( cursor.Substring( size ) >= pCode[( int )AnonymousEnum.CodeSegmentSize] )
 		{
 		Error( TErrorCode.ErrCodeSegmentOverflow );
-		AbortTranslation( TAbortCode.AbortCodeSegmentOverflow );
+		Globals.AbortTranslation( TAbortCode.AbortCodeSegmentOverflow );
 		}
 	}
 	

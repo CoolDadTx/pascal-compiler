@@ -104,18 +104,58 @@ public enum TInstruction
 
 public partial class TCodeGenerator : TBackend
 {
+    private const string StmtLabelPrefix = "$L";
+    private const string FloatLabelPrefix = "$F";
+    private const string StringLabelPrefix = "$S";
+    private const string StaticLink = "$STATIC_LINK";
+    private const string ReturnValue = "$RETURN_VALUE";
+    private const string HighReturnValue = "$HIGH_RETURN_VALUE";
+    private const string FloatNegate = "_FloatNegate";
+    private const string FloatAdd = "_FloatAdd";
+    private const string FloatSubtract = "_FloatSubtract";
+    private const string FloatMultiply = "_FloatMultiply";
+    private const string FloatDivide = "_FloatDivide";
+    private const string FloatCompare = "_FloatCompare";
+    private const string FloatConvert = "_FloatConvert";
+    private const string ReadInteger = "_ReadInteger";
+    private const string ReadReal = "_ReadReal";
+    private const string ReadChar = "_ReadChar";
+    private const string ReadLine = "_ReadLine";
+    private const string WriteInteger = "_WriteInteger";
+    private const string WriteReal = "_WriteReal";
+    private const string WriteBoolean = "_WriteBoolean";
+    private const string WriteChar = "_WriteChar";
+    private const string WriteString = "_WriteString";
+    private const string WriteLine = "_WriteLine";
+    private const string StdEof = "_StdEof";
+    private const string StdEoln = "_StdEoln";
+    private const string StdAbs = "_StdAbs";
+    private const string StdArctan = "_StdArctan";
+    private const string StdCos = "_StdCos";
+    private const string StdExp = "_StdExp";
+    private const string StdLn = "_StdLn";
+    private const string StdSin = "_StdSin";
+    private const string StdSqrt = "_StdSqrt";
+    private const string StdRound = "_StdRound";
+    private const string StdTrunc = "_StdTrunc";
+
     private readonly TAssemblyBuffer pAsmBuffer;
 
     //--Pointers to the list of all the float and string literals
     //--used in the source program.
     private TSymtabNode pFloatLitList;
     private TSymtabNode pStringLitList;
-                                          
-    
+                                              
     //--Assembly buffer
-    private string AsmText ()
+    private string AsmText 
     {
-        return pAsmBuffer.Text();
+        get => pAsmBuffer.Text();
+        set 
+        {
+            pAsmBuffer.Reset();
+            pAsmBuffer.Put(value);
+        }
+        //return pAsmBuffer.Text();
     }
     private void Reset ()
     {
@@ -125,7 +165,7 @@ public partial class TCodeGenerator : TBackend
     {
         pAsmBuffer.Put(ch);
     }
-    private void Put ( ref string pString )
+    private void Put ( string pString )
     {
         pAsmBuffer.Put(pString);
     }
@@ -133,7 +173,7 @@ public partial class TCodeGenerator : TBackend
     {
         pAsmBuffer.PutLine();
     }
-    private void PutLine ( ref string pText )
+    private void PutLine ( string pText )
     {
         pAsmBuffer.PutLine(pText);
     }
@@ -144,7 +184,6 @@ public partial class TCodeGenerator : TBackend
 
     public TCodeGenerator ( string pAsmName )
     {
-        this.pAsmBuffer = new TAssemblyBuffer(pAsmName, TAbortCode.AbortAssemblyFileOpenFailed);
-        pFloatLitList = pStringLitList = null;
+        pAsmBuffer = new TAssemblyBuffer(pAsmName, TAbortCode.AbortAssemblyFileOpenFailed);
     }    
 }

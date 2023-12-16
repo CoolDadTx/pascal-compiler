@@ -10,15 +10,16 @@
 //--------------------------------------------------------------
 public class TAssemblyBuffer : TTextOutBuffer
 {
-    //C++ TO C# CONVERTER NOTE: Enums must be named in C#, so the following enum has been named AnonymousEnum3:
-    private enum AnonymousEnum3
-    {
-        MaxLength = 72,
-    }
+    private const int MaxLength = 72;
+    //private enum AnonymousEnum3
+    //{
+    //    MaxLength = 72,
+    //}
 
-    private BinaryWriter file; // assembly output file
-    private string pText; // assembly buffer pointer
-    private int textLength; // length of assembly comment
+    private StreamWriter file; // assembly output file
+    //private string pText; // assembly buffer pointer
+    private readonly StringBuilder pText = new StringBuilder();
+    private int textLength => pText.Length; // length of assembly comment
 
     //--------------------------------------------------------------
     //  Constructor     Construct an assembly buffer by opening the
@@ -32,10 +33,10 @@ public class TAssemblyBuffer : TTextOutBuffer
         //--Open the assembly output file.  Abort if failed.
         try
         {
-            file = new BinaryWriter(File.OpenWrite(pAssemblyFileName));
-        } catch (Exception e)
-        {
-            AbortTranslation(ac);
+            file = new StreamWriter(File.OpenWrite(pAssemblyFileName));
+        } catch
+        {            
+            Globals.AbortTranslation(ac);
         };
 
         Reset();
@@ -43,32 +44,30 @@ public class TAssemblyBuffer : TTextOutBuffer
 
     public string Text ()
     {
-        return pText;
+        return pText.ToString();
     }
 
     public void Reset ()
     {
-        pText = text;
-        text = StringFunctions.ChangeCharacter(text, 0, '\0');
-        textLength = 0;
+        pText.Clear();
+        pText.Append(text);                
     }
 
     public void Put ( char ch )
     {
-        pText++= ch;
-        pText = '\0';
-        ++textLength;
+        pText.Append(ch);        
     }
     public override void PutLine ()
     {
-        file.Write(text + "\n"); ///file << text << std::endl;
+        file.WriteLine(text);
+        //file << text << std::endl;
 		Reset();
     }
 
-    public new void PutLine ( string pText )
-    {
-        base.PutLine(pText);
-    }
+    //public new void PutLine ( string pText )
+    //{
+    //    base.PutLine(pText);
+    //}
 
     //--------------------------------------------------------------
     //  Advance         Advance pText to the end of the buffer
@@ -76,16 +75,17 @@ public class TAssemblyBuffer : TTextOutBuffer
     //--------------------------------------------------------------
     public void Advance ()
     {
-        while (*pText)
-        {
-            ++pText;
-            ++textLength;
-        }
+        //while (*pText)
+        //{
+        //    ++pText;
+        //    ++textLength;
+        //}
     }
 
     public void Put ( string pString )
     {
-        pText = pString;
+        pText.Clear();
+        pText.Append(pString);
         Advance();
     }
 
@@ -95,9 +95,9 @@ public class TAssemblyBuffer : TTextOutBuffer
         Put(pString);
     }
 
-    public int Fit ( int length )
+    public bool Fit ( int length )
     {
-        return textLength + length < AnonymousEnum3.MaxLength;
+        return (textLength + length) < MaxLength;
     }
 }
 
@@ -109,8 +109,8 @@ partial class TCodeGenerator
     //      r : register code
     //--------------------------------------------------------------
     public void Reg ( TRegister r )
-    {
-        Put(registers[(int)r]);
+    {        
+        Put(Globals.registers[(int)r]);
     }
 
     //--------------------------------------------------------------
@@ -121,7 +121,7 @@ partial class TCodeGenerator
     public void Operator ( TInstruction opcode )
     {
         Put('\t');
-        Put(instructions[(int)opcode]);
+        Put(Globals.instructions[(int)opcode]);
     }
 
     //--------------------------------------------------------------
@@ -135,7 +135,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void Label ( string pPrefix, int index )
     {
-        AsmText() = String.Format("{0}_{1:D3}", pPrefix, index);
+        AsmText = String.Format("{0}_{1:D3}", pPrefix, index);
         Advance();
     }
 
@@ -150,7 +150,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void WordLabel ( string pPrefix, int index )
     {
-        AsmText() = String.Format("WORD PTR {0}_{1:D3}", pPrefix, index);
+        AsmText = String.Format("WORD PTR {0}_{1:D3}", pPrefix, index);
         Advance();
     }
 
@@ -167,7 +167,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void HighDWordLabel ( string pPrefix, int index )
     {
-        AsmText() = String.Format("WORD PTR {0}_{1:D3}+2", pPrefix, index);
+        AsmText = String.Format("WORD PTR {0}_{1:D3}+2", pPrefix, index);
         Advance();
     }
 
@@ -181,7 +181,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void Byte ( TSymtabNode pId )
     {
-        AsmText() = String.Format("BYTE PTR {0}_{1:D3}", pId.String(), pId.labelIndex);
+        AsmText = String.Format("BYTE PTR {0}_{1:D3}", pId.String(), pId.labelIndex);
         Advance();
     }
 
@@ -195,7 +195,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void Word ( TSymtabNode pId )
     {
-        AsmText() = String.Format("WORD PTR {0}_{1:D3}", pId.String(), pId.labelIndex);
+        AsmText = String.Format("WORD PTR {0}_{1:D3}", pId.String(), pId.labelIndex);
         Advance();
     }
 
@@ -211,7 +211,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void HighDWord ( TSymtabNode pId )
     {
-        AsmText() = String.Format("WORD PTR {0}_{1:D3}+2", pId.String(), pId.labelIndex);
+        AsmText = String.Format("WORD PTR {0}_{1:D3}+2", pId.String(), pId.labelIndex);
         Advance();
     }
 
@@ -225,7 +225,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void ByteIndirect ( TRegister r )
     {
-        AsmText() = String.Format("BYTE PTR [{0}]", registers[(int)r]);
+        AsmText = String.Format("BYTE PTR [{0}]", Globals.registers[(int)r]);
         Advance();
     }
 
@@ -239,7 +239,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void WordIndirect ( TRegister r )
     {
-        AsmText() = String.Format("WORD PTR [{0}]", registers[(int)r]);
+        AsmText = String.Format("WORD PTR [{0}]", Globals.registers[(int)r]);
         Advance();
     }
 
@@ -253,7 +253,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void HighDWordIndirect ( TRegister r )
     {
-        AsmText() = String.Format("WORD PTR [{0}+2]", registers[(int)r]);
+        AsmText = String.Format("WORD PTR [{0}+2]", Globals.registers[(int)r]);
         Advance();
     }
 
@@ -267,7 +267,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void TaggedName ( TSymtabNode pId )
     {
-        AsmText() = String.Format("{0}_{1:D3}", pId.String(), pId.labelIndex);
+        AsmText = String.Format("{0}_{1:D3}", pId.String(), pId.labelIndex);
         Advance();
     }
 
@@ -280,7 +280,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void NameLit ( string pName )
     {
-        AsmText() = String.Format("{0}", pName);
+        AsmText = String.Format("{0}", pName);
         Advance();
     }
 
@@ -291,7 +291,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void IntegerLit ( int n )
     {
-        AsmText() = String.Format("{0:D}", n);
+        AsmText = String.Format("{0:D}", n);
         Advance();
     }
 
@@ -303,7 +303,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void CharLit ( char ch )
     {
-        AsmText() = String.Format("'{0}'", ch);
+        AsmText = String.Format("'{0}'", ch);
         Advance();
     }
 }

@@ -34,31 +34,20 @@
 	//  Token lists
 	//--------------------------------------------------------------
 
-//--------------------------------------------------------------
-//  TokenIn     Check if a token code is in the token list.
-//
-//      tc    : token code
-//      pList : ptr to tcDummy-terminated token list
-//
-//  Return:  true if in list, false if not or empty list
-//--------------------------------------------------------------
-
-
-	public static int TokenIn( TTokenCode tc, TTokenCode pList )
+    //--------------------------------------------------------------
+    //  TokenIn     Check if a token code is in the token list.
+    //
+    //      tc    : token code
+    //      pList : ptr to tcDummy-terminated token list
+    //
+    //  Return:  true if in list, false if not or empty list
+    //--------------------------------------------------------------
+	public static bool TokenIn( TTokenCode tc, IEnumerable<TTokenCode> pList )
 	{
-//C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-		TTokenCode * pCode; // ptr to token code in list
+        if (pList == null)
+            return false; // empty list
 
-		if ( ( ( int )pList ) == 0 )
-			return false; // empty list
-
-		for ( pCode = pList; * pCode; ++pCode )
-		{
-		if ( *pCode == tc )
-			return true; // in list
-		}
-
-		return false; // not in list
+        return pList.Any(x => x == tc);        
 	}
 
 	public static int currentNestingLevel = 0;
@@ -66,7 +55,7 @@
 
 	public static TSymtab globalSymtab = new TSymtab(); // the global symbol table
 	public static int cntSymtabs = 0; // symbol table counter
-	public static TSymtab pSymtabList = null; // ptr to head of symtab list
+	public static TSymtab[] pSymtabList; // ptr to head of symtab list
 	public static TSymtab[] vpSymtabs; // ptr to vector of symtab ptrs
 
 	//--------------------------------------------------------------
@@ -91,18 +80,10 @@
 	//--------------------------------------------------------------
 
 	//--Tokens that can start an identifier modifier.
-	public static TTokenCode[] tlIdModStart = { TTokenCode.TcLBracket, TTokenCode.TcLParen, TTokenCode.TcPeriod, TTokenCode.TcDummy };
+	public static TTokenCode[] tlIdModStart = new[] { TTokenCode.TcLBracket, TTokenCode.TcLParen, TTokenCode.TcPeriod, TTokenCode.TcDummy };
 
 	//--Tokens that can end an identifier modifier.
-	public static TTokenCode[] tlIdModEnd = { TTokenCode.TcRBracket, TTokenCode.TcRParen, TTokenCode.TcDummy };
-
-//--------------------------------------------------------------
-//  AbortTranslation    A fatal error occurred during the
-//                      translation.  Print the abort code
-//                      to the error file and then exit.
-//
-//      ac : abort code
-//--------------------------------------------------------------
+	public static TTokenCode[] tlIdModEnd = new [] { TTokenCode.TcRBracket, TTokenCode.TcRParen, TTokenCode.TcDummy };
 
     public static void DisplayError ( string message )
     {
@@ -111,34 +92,38 @@
         Console.ResetColor();
     }
 
-	public static void AbortTranslation( TAbortCode ac )
+    //--------------------------------------------------------------
+    //  AbortTranslation    A fatal error occurred during the
+    //                      translation.  Print the abort code
+    //                      to the error file and then exit.
+    //
+    //      ac : abort code
+    //--------------------------------------------------------------
+    public static void AbortTranslation( TAbortCode ac )
 	{
         var code = (int)ac;
         DisplayError($"*** Fatal translator error: {abortMsg[-code]}");
         Environment.Exit(code);
 	}
 
-//--------------------------------------------------------------
-//  Error       Print an arrow under the error and then
-//              print the error message.
-//
-//      ec : error code
-//--------------------------------------------------------------
-
-
+    //--------------------------------------------------------------
+    //  Error       Print an arrow under the error and then
+    //              print the error message.
+    //
+    //      ec : error code
+    //--------------------------------------------------------------
 	public static void Error( TErrorCode ec )
 	{
 		const int maxSyntaxErrors = 25;
 
-		int errorPosition = errorArrowOffset + inputPosition - 1;
+		var errorPosition = errorArrowOffset + inputPosition - 1;
 
 		//--Print the arrow pointing to the token just scanned.
-		if ( errorArrowFlag != 0 )
+		if (errorArrowFlag)
 		{
-//C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
-//ORIGINAL LINE: sprintf(list.text, "%*s^", errorPosition, " ");
-		list.text = String.Format( "%*s^", errorPosition, " " );
-		list.PutLine();
+            //ORIGINAL LINE: sprintf(list.text, "%*s^", errorPosition, " ");
+            list.text = "".PadLeft(errorPosition);		    
+		    list.PutLine();
 		}
 
 		//--Print the error message.
@@ -147,19 +132,17 @@
 
 		if ( ++errorCount > maxSyntaxErrors )
 		{
-		list.PutLine( "Too many syntax errors.  Translation aborted." );
-		AbortTranslation( TAbortCode.AbortTooManySyntaxErrors );
+		    list.PutLine( "Too many syntax errors.  Translation aborted." );
+		    Globals.AbortTranslation( TAbortCode.AbortTooManySyntaxErrors );
 		}
 	}
 
-//--------------------------------------------------------------
-//  RuntimeError        Print the runtime error message and then
-//                      abort the program.
-//
-//      ec : error code
-//--------------------------------------------------------------
-
-
+    //--------------------------------------------------------------
+    //  RuntimeError        Print the runtime error message and then
+    //                      abort the program.
+    //
+    //      ec : error code
+    //--------------------------------------------------------------
 	public static void RuntimeError( TRuntimeErrorCode ec )
 	{
 		Console.WriteLine();
@@ -171,16 +154,13 @@
 	}
 
 	public static int errorCount = 0; // count of syntax errors
-	public static bool errorArrowFlag = true; // true if print arrows under syntax
-					  //   errors, false if not
+	public static bool errorArrowFlag = true; // true if print arrows under syntax errors, false if not
 	public static int errorArrowOffset = 8; // offset for printing the error arrow
 
 	//--------------------------------------------------------------
 	//  Abort messages      Keyed to enumeration type TAbortCode.
 	//--------------------------------------------------------------
 
-//C++ TO C# CONVERTER TODO TASK: C# does not have an equivalent to pointers to value types:
-//ORIGINAL LINE: char *abortMsg[] = { null, "Invalid command line arguments", "Failed to open source file", "Failed to open intermediate form file", "Failed to open assembly file", "Too many syntax errors", "Stack overflow", "Code segment overflow", "Nesting too deep", "Runtime error", "Unimplemented feature"};
 	public static string[] abortMsg = new [] { null, "Invalid command line arguments", "Failed to open source file", "Failed to open intermediate form file", "Failed to open assembly file", "Too many syntax errors", "Stack overflow", "Code segment overflow", "Nesting too deep", "Runtime error", "Unimplemented feature" };
 
 	//--------------------------------------------------------------
@@ -198,11 +178,7 @@
 
 	public static readonly TTokenCode mcLineMarker = ( ( TTokenCode ) 127 );
 	public static readonly TTokenCode mcLocationMarker = ( ( TTokenCode ) 126 );
-
-	//--------------------------------------------------------------
-	//  TIcode      Intermediate code subclass of TScanner.
-	//--------------------------------------------------------------
-
+	
 	//--Vector of special symbol and reserved word strings.
 	public static readonly string[] symbolStrings = new[] { null, null, null, null, null, null, "^", "*", "(", ")", "-", "+", "=", "[", "]", ":", ";", "<", ">", ",", ".", "/", ":=", "<=", ">=", "<>", "..", "and", "array", "begin", "case", "const", "div", "do", "downto", "else", "end", "file", "for", "function", "goto", "if", "in", "label", "mod", "nil", "not", "of", "or", "packed", "procedure", "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with" };
 
@@ -239,21 +215,21 @@
 
 		do
 		{
-		TStdRtn pSR = stdRtnList[i];
-		TSymtabNode pRoutineId = pSymtab.Enter( pSR.pName, pSR.dc );
+		    TStdRtn pSR = stdRtnList[i];
+		    TSymtabNode pRoutineId = pSymtab.Enter( pSR.pName, pSR.dc );
 
-		pRoutineId.defn.routine.which = pSR.rc;
-		pRoutineId.defn.routine.parmCount = 0;
-		pRoutineId.defn.routine.totalParmSize = 0;
-		pRoutineId.defn.routine.totalLocalSize = 0;
-		pRoutineId.defn.routine.locals.pParmIds = null;
-		pRoutineId.defn.routine.locals.pConstantIds = null;
-		pRoutineId.defn.routine.locals.pTypeIds = null;
-		pRoutineId.defn.routine.locals.pVariableIds = null;
-		pRoutineId.defn.routine.locals.pRoutineIds = null;
-		pRoutineId.defn.routine.pSymtab = null;
-		pRoutineId.defn.routine.pIcode = null;
-		SetType( pRoutineId.pType, pDummyType );
+		    pRoutineId.defn.routine.which = pSR.rc;
+		    pRoutineId.defn.routine.parmCount = 0;
+		    pRoutineId.defn.routine.totalParmSize = 0;
+		    pRoutineId.defn.routine.totalLocalSize = 0;
+		    pRoutineId.defn.routine.locals.pParmIds = null;
+		    pRoutineId.defn.routine.locals.pConstantIds = null;
+		    pRoutineId.defn.routine.locals.pTypeIds = null;
+		    pRoutineId.defn.routine.locals.pVariableIds = null;
+		    pRoutineId.defn.routine.locals.pRoutineIds = null;
+		    pRoutineId.defn.routine.pSymtab = null;
+		    pRoutineId.defn.routine.pIcode = null;
+		    SetType( pRoutineId.pType, pDummyType );
 		} while ( stdRtnList[++i].pName != null );
 	}
 
@@ -351,36 +327,34 @@
 		new TResWord( rw8, rw9 )
 	};
 
-//--------------------------------------------------------------
-//  InitializePredefinedTypes   Initialize the predefined
-//                              types by entering their
-//                              identifiers into the symbol
-//                              table.
-//
-//      pSymtab : ptr to symbol table
-//--------------------------------------------------------------
-
-
+    //--------------------------------------------------------------
+    //  InitializePredefinedTypes   Initialize the predefined
+    //                              types by entering their
+    //                              identifiers into the symbol
+    //                              table.
+    //
+    //      pSymtab : ptr to symbol table
+    //--------------------------------------------------------------
 	public static void InitializePredefinedTypes( TSymtab pSymtab )
 	{
 		//--Enter the names of the predefined types and of "false"
 		//--and "true" into the symbol table.
-		TSymtabNode pIntegerId = pSymtab.Enter( "integer", TDefnCode.DcType );
-		TSymtabNode pRealId = pSymtab.Enter( "real", TDefnCode.DcType );
-		TSymtabNode pBooleanId = pSymtab.Enter( "boolean", TDefnCode.DcType );
-		TSymtabNode pCharId = pSymtab.Enter( "char", TDefnCode.DcType );
-		TSymtabNode pFalseId = pSymtab.Enter( "false", TDefnCode.DcConstant );
-		TSymtabNode pTrueId = pSymtab.Enter( "true", TDefnCode.DcConstant );
+		var pIntegerId = pSymtab.Enter( "integer", TDefnCode.DcType );
+		var pRealId = pSymtab.Enter( "real", TDefnCode.DcType );
+		var pBooleanId = pSymtab.Enter( "boolean", TDefnCode.DcType );
+		var pCharId = pSymtab.Enter( "char", TDefnCode.DcType );
+		var pFalseId = pSymtab.Enter( "false", TDefnCode.DcConstant );
+		var pTrueId = pSymtab.Enter( "true", TDefnCode.DcConstant );
 
 		//--Create the predefined type objects.
 		if ( pIntegerType == null )
-		SetType( pIntegerType, new TType( TFormCode.FcScalar, sizeof( int ), pIntegerId ) );
+		    SetType( pIntegerType, new TType( TFormCode.FcScalar, sizeof( int ), pIntegerId ) );
 		if ( pRealType == null )
-		SetType( pRealType, new TType( TFormCode.FcScalar, sizeof( float ), pRealId ) );
+		    SetType( pRealType, new TType( TFormCode.FcScalar, sizeof( float ), pRealId ) );
 		if ( pBooleanType == null )
-		SetType( pBooleanType, new TType( TFormCode.FcEnum, sizeof( int ), pBooleanId ) );
+		    SetType( pBooleanType, new TType( TFormCode.FcEnum, sizeof( int ), pBooleanId ) );
 		if ( pCharType == null )
-		SetType( pCharType, new TType( TFormCode.FcScalar, sizeof( char ), pCharId ) );
+		    SetType( pCharType, new TType( TFormCode.FcScalar, sizeof( char ), pCharId ) );
 
 		//--Link each predefined type's id node to its type object.
 		SetType( pIntegerId.pType, pIntegerType );
@@ -404,10 +378,9 @@
 		SetType( pDummyType, new TType( TFormCode.FcNone, 1, null ) );
 	}
 
-//--------------------------------------------------------------
-//  RemovePredefinedTypes       Remove the predefined types.
-//--------------------------------------------------------------
-
+    //--------------------------------------------------------------
+    //  RemovePredefinedTypes       Remove the predefined types.
+    //--------------------------------------------------------------
 	public static void RemovePredefinedTypes()
 	{
 		RemoveType( pIntegerType );

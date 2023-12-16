@@ -7,8 +7,9 @@ public abstract class TToken
 
 	protected TTokenCode code;
 	protected TDataType type;
-	protected TDataValue value = new TDataValue();
-	protected string str = new string( new char[maxInputBufferSize] );
+    //protected TDataValue value = new TDataValue();
+    protected TDataValue value;
+	//protected string str = new string( new char[maxInputBufferSize] );
 
 	public TTokenCode Code()
 	{
@@ -22,10 +23,11 @@ public abstract class TToken
 	{
 		return value;
 	}
-	public string String()
-	{
-		return str;
-	}
+	public string String { get; set; }
+    //public string String()
+	//{
+    //		return str;
+	//}
 
 	public abstract void Get( TTextInBuffer buffer );
 	public abstract bool IsDelimiter();

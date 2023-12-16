@@ -690,7 +690,7 @@ public class TSymtabStack : System.IDisposable
 		if ( ++currentNestingLevel > AnonymousEnum.MaxNestingLevel )
 		{
 		Error( TErrorCode.ErrNestingTooDeep );
-		AbortTranslation( TAbortCode.AbortNestingTooDeep );
+		Globals.AbortTranslation( TAbortCode.AbortNestingTooDeep );
 		}
 
 		SetCurrentSymtab( new TSymtab() );

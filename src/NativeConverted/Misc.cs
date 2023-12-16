@@ -1,7 +1,6 @@
 ﻿//--------------------------------------------------------------
 //  TCharCode           Character codes.
 //--------------------------------------------------------------
-
 public enum TCharCode
 {
 	CcLetter,
@@ -102,7 +101,6 @@ public enum TDataType
 //  TDataValue          Data value.
 //--------------------------------------------------------------
 
-//C++ TO C# CONVERTER TODO TASK: Unions are not supported in C#:
 //union TDataValue
 //{
 //	int integer;
@@ -110,5 +108,11 @@ public enum TDataType
 //	char character;
 //	char *pString;
 //};
-
+[GenerateOneOf]
+public partial class TDataValue : OneOfBase<int, float, char, string>
+{
+    protected TDataValue ( OneOf<int, float, char, string> input ) : base(input)
+    {
+    }
+}
 

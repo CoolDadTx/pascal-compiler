@@ -27,7 +27,7 @@ public abstract class TBackend : IDisposable
     protected TSymtabNode pNode; // ptr to symtab node
 
     //--Intermediate code save area
-    protected TToken[] pSaveToken;
+    protected TToken pSaveToken;  //TToken[]
     protected TTokenCode saveToken;
     protected string pSaveTokenString;
     protected TIcode pSaveIcode;
@@ -79,10 +79,10 @@ public abstract class TBackend : IDisposable
         pSaveIcode = pIcode;
         pSaveNode = pNode;
         saveLocation = CurrentLocation();
-        saveLineNumber = currentLineNumber;
+        saveLineNumber = Globals.currentLineNumber;
 
-        pSaveTokenString = new string(new char[Convert.ToString(pToken.String()).Length]);
-        pSaveTokenString = pToken.String();
+        //pSaveTokenString = new string(new char[Convert.ToString(pToken.String()).Length]);
+        pSaveTokenString = pToken.String;
     }
 
     //--------------------------------------------------------------
@@ -97,9 +97,9 @@ public abstract class TBackend : IDisposable
         pIcode = pSaveIcode;
         pNode = pSaveNode;
         GoTo(saveLocation);
-        currentLineNumber = saveLineNumber;
+        Globals.currentLineNumber = saveLineNumber;
 
-        pToken.String() = pSaveTokenString;
+        pToken.String = pSaveTokenString;
         pSaveTokenString = null;
     }
 

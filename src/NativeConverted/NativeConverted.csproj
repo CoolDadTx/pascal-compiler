@@ -5,4 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OneOf" Version="3.0.263" />
+    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.263" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="OneOf" />
+    <Using Include="System.Text" />
+  </ItemGroup>
 </Project>

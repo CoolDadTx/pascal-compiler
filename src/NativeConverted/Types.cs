@@ -156,14 +156,14 @@ public class TType : System.IDisposable
 	   }
    }
 
-	public int IsScalar()
+	public bool IsScalar()
 	{
 		return ( form != TFormCode.FcArray ) && ( form != TFormCode.FcRecord );
 	}
 
 	public TType Base()
 	{
-	return form == ( ( int )TFormCode.FcSubrange ) != 0 ? subrange.pBaseType : ( TType ) this;
+	return form == TFormCode.FcSubrange ? subrange.pBaseType : this;
 	}
 
 	public enum TVerbosityCode
@@ -183,17 +183,17 @@ public class TType : System.IDisposable
 	public void PrintTypeSpec( TVerbosityCode vc )
 	{
 		//--Type form and size
-		list.text = String.Format( "{0}, size {1:D} bytes.  Type identifier: ", Globals.formStrings[( int )form], size );
+		Globals.list.text = String.Format( "{0}, size {1:D} bytes.  Type identifier: ", Globals.formStrings[( int )form], size );
 
 		//--Type identifier
 		if ( pTypeId != null )
-			list.text += pTypeId.String();
+            Globals.list.text += pTypeId.String();
 		else
 		{
-		list.text += "<unnamed>";
-		vc = TVerbosityCode.VcVerbose; // verbose output for unnamed types
+            Globals.list.text += "<unnamed>";
+		    vc = TVerbosityCode.VcVerbose; // verbose output for unnamed types
 		}
-		list.PutLine();
+        Globals.list.PutLine();
 
 		//--Print the information for the particular type.
 		switch ( form )
@@ -225,13 +225,13 @@ public class TType : System.IDisposable
 		if ( vc == TVerbosityCode.VcTerse )
 			return;
 
-		//--Print the names and values of the enumeration
-		//--constant identifiers.
-		list.PutLine( "--- Enumeration Constant Identifiers " + "(value = name) ---" );
-		for ( TSymtabNode * pConstId = enumeration.pConstIds; pConstId != null; pConstId = pConstId.next )
+        //--Print the names and values of the enumeration
+        //--constant identifiers.
+        Globals.list.PutLine( "--- Enumeration Constant Identifiers " + "(value = name) ---" );
+		for ( TSymtabNode pConstId = enumeration.pConstIds; pConstId != null; pConstId = pConstId.next )
 		{
-		list.text = String.Format( "    {0:D} = {1}", pConstId.defn.constant.value.integer, pConstId.String() );
-		list.PutLine();
+            Globals.list.text = String.Format( "    {0:D} = {1}", pConstId.defn.constant.value.integer, pConstId.String() );
+            Globals.list.PutLine();
 		}
 	}
 
@@ -247,15 +247,15 @@ public class TType : System.IDisposable
 		if ( vc == TVerbosityCode.VcTerse )
 			return;
 
-		//--Subrange minimum and maximum values
-		list.text = String.Format( "Minimum value = {0:D}, maximum value = {1:D}", subrange.min, subrange.max );
-		list.PutLine();
+        //--Subrange minimum and maximum values
+        Globals.list.text = String.Format( "Minimum value = {0:D}, maximum value = {1:D}", subrange.min, subrange.max );
+        Globals.list.PutLine();
 
 		//--Base range type
 		if ( subrange.pBaseType )
 		{
-		list.PutLine( "--- Base Type ---" );
-		subrange.pBaseType.PrintTypeSpec( TVerbosityCode.VcTerse );
+            Globals.list.PutLine( "--- Base Type ---" );
+		    subrange.pBaseType.PrintTypeSpec( TVerbosityCode.VcTerse );
 		}
 	}
 
@@ -271,22 +271,22 @@ public class TType : System.IDisposable
 		if ( vc == TVerbosityCode.VcTerse )
 			return;
 
-		//--Element count
-		list.text = String.Format( "{0:D} elements", array.elmtCount );
-		list.PutLine();
+        //--Element count
+        Globals.list.text = String.Format( "{0:D} elements", array.elmtCount );
+        Globals.list.PutLine();
 
 		//--Index type
 		if ( array.pIndexType )
 		{
-		list.PutLine( "--- INDEX TYPE ---" );
-		array.pIndexType.PrintTypeSpec( TVerbosityCode.VcTerse );
+            Globals.list.PutLine( "--- INDEX TYPE ---" );
+		    array.pIndexType.PrintTypeSpec( TVerbosityCode.VcTerse );
 		}
 
 		//--Element type
 		if ( array.pElmtType )
 		{
-		list.PutLine( "--- ELEMENT TYPE ---" );
-		array.pElmtType.PrintTypeSpec( TVerbosityCode.VcTerse );
+            Globals.list.PutLine( "--- ELEMENT TYPE ---" );
+		    array.pElmtType.PrintTypeSpec( TVerbosityCode.VcTerse );
 		}
 	}
 
@@ -302,17 +302,16 @@ public class TType : System.IDisposable
 		if ( vc == TVerbosityCode.VcTerse )
 			return;
 
-		//--Print the names and values of the record field identifiers.
-		list.PutLine( "--- Record Field Identifiers (offset : name) ---" );
-		list.PutLine();
-		for ( TSymtabNode * pFieldId = record.pSymtab.Root(); pFieldId != null; pFieldId = pFieldId.next )
+        //--Print the names and values of the record field identifiers.
+        Globals.list.PutLine( "--- Record Field Identifiers (offset : name) ---" );
+        Globals.list.PutLine();
+		for (TSymtabNode pFieldId = record.pSymtab.Root(); pFieldId != null; pFieldId = pFieldId.next )
 		{
-		list.text = String.Format( "    {0:D} : {1}", pFieldId.defn.data.offset, pFieldId.String() );
-		list.PutLine();
-		pFieldId.PrintVarOrField();
+            Globals.list.text = String.Format( "    {0:D} : {1}", pFieldId.defn.data.offset, pFieldId.String() );
+            Globals.list.PutLine();
+		    pFieldId.PrintVarOrField();
 		}
 	}
-
 
 	//--------------------------------------------------------------
 	//  SetType     Set the target type.  Increment the reference
@@ -323,12 +322,10 @@ public class TType : System.IDisposable
 	//
 	//  Return: ptr to source type object
 	//--------------------------------------------------------------
-
-//C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on the parameter 'pSourceType', so pointers on this parameter are left unchanged:
-	public TType SetType( ref TType pTargetType, TType * pSourceType )
+	public TType SetType( ref TType pTargetType, TType pSourceType )
 	{
-		if ( pTargetType == null )
-			RemoveType( ref pTargetType );
+		if (pTargetType == null)
+			RemoveType(ref pTargetType);
 
 		++pSourceType.refCount;
 		pTargetType = pSourceType;
@@ -343,18 +340,14 @@ public class TType : System.IDisposable
 	//
 	//      pType : ref to ptr to type object
 	//--------------------------------------------------------------
-
-//C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on the parameter 'pType', so pointers on this parameter are left unchanged:
-	public void RemoveType( ref TType * pType )
+	public void RemoveType( ref TType pType )
 	{
-		if ( pType != null && ( --pType.refCount == 0 ) )
+		if (pType != null && (--pType.refCount == 0))
 		{
-		if ( pType != null )
-			pType.Dispose();
-		pType = null;
+            pType?.Dispose();
+		    pType = null;
 		}
 	}
-
 
 	//              ************************
 	//              *                      *
@@ -389,7 +382,7 @@ public class TType : System.IDisposable
 		return;
 
 		//--Else:  Incompatible types.
-		Error( TErrorCode.ErrIncompatibleTypes );
+		Globals.Error( TErrorCode.ErrIncompatibleTypes );
 	}
 
 	//--------------------------------------------------------------
@@ -405,13 +398,13 @@ public class TType : System.IDisposable
 	{
 		pType1 = pType1.Base();
 		if ( ( pType1 != Globals.pIntegerType ) && ( pType1 != Globals.pRealType ) )
-		Error( TErrorCode.ErrIncompatibleTypes );
+            Globals.Error( TErrorCode.ErrIncompatibleTypes );
 
 		if ( pType2 != null )
 		{
 		pType2 = pType2.Base();
 		if ( ( pType2 != Globals.pIntegerType ) && ( pType2 != Globals.pRealType ) )
-			Error( TErrorCode.ErrIncompatibleTypes );
+			Globals.Error( TErrorCode.ErrIncompatibleTypes );
 		}
 	}
 
@@ -427,7 +420,7 @@ public class TType : System.IDisposable
 	public void CheckBoolean( TType pType1, TType pType2 = null )
 	{
 		if ( ( pType1.Base() != Globals.pBooleanType ) || (pType2 != null && (pType2.Base() != Globals.pBooleanType)) )
-		Error( TErrorCode.ErrIncompatibleTypes );
+            Globals.Error( TErrorCode.ErrIncompatibleTypes );
 	}
 
 	//--------------------------------------------------------------
@@ -459,7 +452,7 @@ public class TType : System.IDisposable
 		if ( ( pTargetType.form == TFormCode.FcArray ) && ( pValueType.form == TFormCode.FcArray ) && ( pTargetType.array.pElmtType == Globals.pCharType ) && ( pValueType.array.pElmtType == Globals.pCharType ) && ( pTargetType.array.elmtCount == pValueType.array.elmtCount ) )
 		return;
 
-		Error( ec );
+		Globals.Error( ec );
 	}
 
 
@@ -473,7 +466,7 @@ public class TType : System.IDisposable
 	//  Return: true if yes, false if no
 	//--------------------------------------------------------------
 
-	public int IntegerOperands( TType pType1, TType pType2 )
+	public bool IntegerOperands( TType pType1, TType pType2 )
 	{
 		pType1 = pType1.Base();
 		pType2 = pType2.Base();
@@ -492,7 +485,7 @@ public class TType : System.IDisposable
 	//  Return: true if yes, false if no
 	//--------------------------------------------------------------
 
-	public int RealOperands( TType pType1, TType pType2 )
+	public bool RealOperands( TType pType1, TType pType2 )
 	{
 		pType1 = pType1.Base();
 		pType2 = pType2.Base();
