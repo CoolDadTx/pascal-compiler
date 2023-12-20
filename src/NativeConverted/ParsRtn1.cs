@@ -33,7 +33,7 @@ partial class TParser
         if (token == TTokenCode.TcSemicolon)
             GetToken();
         else if (TokenIn(token, tlDeclarationStart) != 0 || TokenIn(token, tlStatementStart) != 0)
-            Error(TErrorCode.ErrMissingSemicolon);
+            Globals.Error(TErrorCode.ErrMissingSemicolon);
 
         //--<block>
         ParseBlock(pProgramId);
@@ -67,7 +67,7 @@ partial class TParser
         //--<id>
         if (token == TTokenCode.TcIdentifier)
         {
-            pProgramId = EnterNewLocal(pToken.String(), TDefnCode.DcProgram);
+            pProgramId = EnterNewLocal(pToken.String, TDefnCode.DcProgram);
             pProgramId.defn.routine.which = TRoutineCode.RcDeclared;
             pProgramId.defn.routine.parmCount = 0;
             pProgramId.defn.routine.totalParmSize = 0;
@@ -79,11 +79,11 @@ partial class TParser
             pProgramId.defn.routine.locals.pRoutineIds = null;
             pProgramId.defn.routine.pSymtab = null;
             pProgramId.defn.routine.pIcode = null;
-            SetType(pProgramId.pType, pDummyType);
+            SetType(pProgramId.pType, Globals.pDummyType);
             GetToken();
         } else
         {
-            Error(TErrorCode.ErrMissingIdentifier);
+            Globals.Error(TErrorCode.ErrMissingIdentifier);
         }
 
         //-- ( or ;
@@ -103,8 +103,8 @@ partial class TParser
                 GetToken();
                 if (token == TTokenCode.TcIdentifier)
                 {
-                    TSymtabNode pParmId = EnterNewLocal(pToken.String(), TDefnCode.DcVarParm);
-                    SetType(pParmId.pType, pDummyType);
+                    TSymtabNode pParmId = EnterNewLocal(pToken.String, TDefnCode.DcVarParm);
+                    SetType(pParmId.pType, Globals.pDummyType);
                     GetToken();
 
                     //--Link program parm id nodes together.
@@ -117,7 +117,7 @@ partial class TParser
                     }
                 } else
                 {
-                    Error(TErrorCode.ErrMissingIdentifier);
+                    Globals.Error(TErrorCode.ErrMissingIdentifier);
                 }
             } while (token == TTokenCode.TcComma);
 
@@ -158,7 +158,7 @@ partial class TParser
             if (token == TTokenCode.TcSemicolon)
                 GetToken();
             else if (TokenIn(token, tlProcFuncStart) != 0 || TokenIn(token, tlStatementStart) != 0)
-                Error(TErrorCode.ErrMissingSemicolon);
+                Globals.Error(TErrorCode.ErrMissingSemicolon);
         }
     }
 
@@ -183,10 +183,10 @@ partial class TParser
         if (token == TTokenCode.TcSemicolon)
             GetToken();
         else if (TokenIn(token, tlDeclarationStart) != 0 || TokenIn(token, tlStatementStart) != 0)
-            Error(TErrorCode.ErrMissingSemicolon);
+            Globals.Error(TErrorCode.ErrMissingSemicolon);
 
         //--<block> or forward
-        if (string.Compare(pToken.String(), "forward", true) != 0)
+        if (String.Equals(pToken.String, "forward", StringComparison.OrdinalIgnoreCase))
         {
             pRoutineId.defn.routine.which = TRoutineCode.RcDeclared;
             ParseBlock(pRoutineId);
@@ -214,7 +214,7 @@ partial class TParser
     public TSymtabNode ParseProcedureHeader ()
     {
         TSymtabNode pProcId; // ptr to procedure id node
-        int forwardFlag = false; // true if forwarded, false if not
+        var forwardFlag = false; // true if forwarded, false if not
 
         GetToken();
 
@@ -222,12 +222,12 @@ partial class TParser
         //--       this scope, it must have been a forward declaration.
         if (token == TTokenCode.TcIdentifier)
         {
-            pProcId = SearchLocal(pToken.String());
+            pProcId = SearchLocal(pToken.String);
             if (pProcId == null)
             {
 
                 //--Not already declared.
-                pProcId = EnterLocal(pToken.String(), TDefnCode.DcProcedure);
+                pProcId = EnterLocal(pToken.String, TDefnCode.DcProcedure);
                 pProcId.defn.routine.totalLocalSize = 0;
                 SetType(pProcId.pType, pDummyType);
             } else if ((pProcId.defn.how == TDefnCode.DcProcedure) && (pProcId.defn.routine.which == TRoutineCode.RcForward))
@@ -237,13 +237,13 @@ partial class TParser
                 forwardFlag = true;
             } else
             {
-                Error(TErrorCode.ErrRedefinedIdentifier);
+                Globals.Error(TErrorCode.ErrRedefinedIdentifier);
             }
 
             GetToken();
         } else
         {
-            Error(TErrorCode.ErrMissingIdentifier);
+            Globals.Error(TErrorCode.ErrMissingIdentifier);
         }
 
         //-- ( or ;
@@ -263,8 +263,8 @@ partial class TParser
             int totalParmSize; // total byte size of all parms
             TSymtabNode pParmList = ParseFormalParmList(parmCount, totalParmSize);
 
-            if (forwardFlag != 0)
-                Error(TErrorCode.ErrAlreadyForwarded);
+            if (forwardFlag)
+                Globals.Error(TErrorCode.ErrAlreadyForwarded);
             else
             {
 
@@ -273,7 +273,7 @@ partial class TParser
                 pProcId.defn.routine.totalParmSize = totalParmSize;
                 pProcId.defn.routine.locals.pParmIds = pParmList;
             }
-        } else if (forwardFlag == 0)
+        } else if (!forwardFlag)
         {
 
             //--No parameters and no forward declaration.
@@ -287,7 +287,7 @@ partial class TParser
         pProcId.defn.routine.locals.pVariableIds = null;
         pProcId.defn.routine.locals.pRoutineIds = null;
 
-        SetType(pProcId.pType, pDummyType);
+        SetType(pProcId.pType, Globals.pDummyType);
         return pProcId;
     }
 
@@ -318,12 +318,12 @@ partial class TParser
         //--       this scope, it must have been a forward declaration.
         if (token == TTokenCode.TcIdentifier)
         {
-            pFuncId = SearchLocal(pToken.String());
+            pFuncId = SearchLocal(pToken.String);
             if (pFuncId == null)
             {
 
                 //--Not already declared.
-                pFuncId = EnterLocal(pToken.String(), TDefnCode.DcFunction);
+                pFuncId = EnterLocal(pToken.String, TDefnCode.DcFunction);
                 pFuncId.defn.routine.totalLocalSize = 0;
             } else if ((pFuncId.defn.how == TDefnCode.DcFunction) && (pFuncId.defn.routine.which == TRoutineCode.RcForward))
             {
@@ -332,13 +332,13 @@ partial class TParser
                 forwardFlag = true;
             } else
             {
-                Error(TErrorCode.ErrRedefinedIdentifier);
+                Globals.Error(TErrorCode.ErrRedefinedIdentifier);
             }
 
             GetToken();
         } else
         {
-            Error(TErrorCode.ErrMissingIdentifier);
+            Globals.Error(TErrorCode.ErrMissingIdentifier);
         }
 
         //-- ( or : or ;
@@ -358,8 +358,8 @@ partial class TParser
             int totalParmSize; // total byte size of all parms
             TSymtabNode pParmList = ParseFormalParmList(parmCount, totalParmSize);
 
-            if (forwardFlag != 0)
-                Error(TErrorCode.ErrAlreadyForwarded);
+            if (forwardFlag)
+                Globals.Error(TErrorCode.ErrAlreadyForwarded);
             else
             {
 
@@ -368,7 +368,7 @@ partial class TParser
                 pFuncId.defn.routine.totalParmSize = totalParmSize;
                 pFuncId.defn.routine.locals.pParmIds = pParmList;
             }
-        } else if (forwardFlag == 0)
+        } else if (!forwardFlag)
         {
 
             //--No parameters and no forward declaration.
@@ -386,25 +386,25 @@ partial class TParser
         //--                     there must not be a type id, but if
         //--                     there is, parse it anyway for error
         //--                     recovery.
-        if (forwardFlag == 0 || (token == TTokenCode.TcColon))
+        if (!forwardFlag || (token == TTokenCode.TcColon))
         {
             CondGetToken(TTokenCode.TcColon, TErrorCode.ErrMissingColon);
             if (token == TTokenCode.TcIdentifier)
             {
-                TSymtabNode pTypeId = Find(pToken.String());
+                TSymtabNode pTypeId = Find(pToken.String);
                 if (pTypeId.defn.how != TDefnCode.DcType)
-                    Error(TErrorCode.ErrInvalidType);
+                    Globals.Error(TErrorCode.ErrInvalidType);
 
-                if (forwardFlag != 0)
-                    Error(TErrorCode.ErrAlreadyForwarded);
+                if (forwardFlag)
+                    Globals.Error(TErrorCode.ErrAlreadyForwarded);
                 else
                     SetType(pFuncId.pType, pTypeId.pType);
 
                 GetToken();
             } else
             {
-                Error(TErrorCode.ErrMissingIdentifier);
-                SetType(pFuncId.pType, pDummyType);
+                Globals.Error(TErrorCode.ErrMissingIdentifier);
+                SetType(pFuncId.pType, Globals.pDummyType);
             }
         }
 
@@ -427,7 +427,7 @@ partial class TParser
         //--                       and then parse the compound statement.
         Resync(tlStatementStart);
         if (token != TTokenCode.TcBEGIN)
-            Error(TErrorCode.ErrMissingBEGIN);
+            Globals.Error(TErrorCode.ErrMissingBEGIN);
         icode.Reset();
         ParseCompound();
 

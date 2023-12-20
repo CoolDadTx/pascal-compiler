@@ -71,7 +71,7 @@ partial class TCodeGenerator
             return EmitRoundTruncCall(pRoutineId);
 
             default:
-            return pDummyType;
+            return Globals.pDummyType;
         }
     }
 
@@ -97,12 +97,12 @@ partial class TCodeGenerator
                 TType pVarType = EmitVariable(pVarId, true).Base();
 
                 //--Read the value.
-                if (pVarType == pIntegerType)
+                if (pVarType == Globals.pIntegerType)
                 {
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.ReadInteger);
+                        NameLit(ReadInteger);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -119,12 +119,12 @@ partial class TCodeGenerator
                         Reg(TRegister.Ax);
                         pAsmBuffer.PutLine();
                     };
-                } else if (pVarType == pRealType)
+                } else if (pVarType == Globals.pRealType)
                 {
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.ReadReal);
+                        NameLit(ReadReal);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -149,12 +149,12 @@ partial class TCodeGenerator
                         Reg(TRegister.Dx);
                         pAsmBuffer.PutLine();
                     };
-                } else if (pVarType == pCharType)
+                } else if (pVarType == Globals.pCharType)
                 {
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.ReadChar);
+                        NameLit(ReadChar);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -183,12 +183,12 @@ partial class TCodeGenerator
             {
                 Operator(TInstruction.Call);
                 pAsmBuffer.Put('\t');
-                NameLit(DefineConstants.ReadLine);
+                NameLit(ReadLine);
                 pAsmBuffer.PutLine();
             };
         }
 
-        return pDummyType;
+        return Globals.pDummyType;
     }
 
     //--------------------------------------------------------------
@@ -246,7 +246,7 @@ partial class TCodeGenerator
                             Reg(TRegister.Ax);
                             pAsmBuffer.PutLine();
                         };
-                    } else if (pExprType == pRealType)
+                    } else if (pExprType == Globals.pRealType)
                     {
 
                         {
@@ -270,7 +270,7 @@ partial class TCodeGenerator
 
                     //--No field width: Push the default field width and
                     //--                the default precision.
-                    if (pExprType == pIntegerType)
+                    if (pExprType == Globals.pIntegerType)
                     {
                         {
                             Operator(TInstruction.Mov);
@@ -286,7 +286,7 @@ partial class TCodeGenerator
                             Reg(TRegister.Ax);
                             pAsmBuffer.PutLine();
                         };
-                    } else if (pExprType == pRealType)
+                    } else if (pExprType == Globals.pRealType)
                     {
                         {
                             Operator(TInstruction.Mov);
@@ -336,12 +336,12 @@ partial class TCodeGenerator
                 }
 
                 //--Emit the code to write the value.
-                if (pExprType == pIntegerType)
+                if (pExprType == Globals.pIntegerType)
                 {
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.WriteInteger);
+                        NameLit(WriteInteger);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -352,12 +352,12 @@ partial class TCodeGenerator
                         IntegerLit(4);
                         pAsmBuffer.PutLine();
                     };
-                } else if (pExprType == pRealType)
+                } else if (pExprType == Globals.pRealType)
                 {
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.WriteReal);
+                        NameLit(WriteReal);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -368,12 +368,12 @@ partial class TCodeGenerator
                         IntegerLit(8);
                         pAsmBuffer.PutLine();
                     };
-                } else if (pExprType == pBooleanType)
+                } else if (pExprType == Globals.pBooleanType)
                 {
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.WriteBoolean);
+                        NameLit(WriteBoolean);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -384,12 +384,12 @@ partial class TCodeGenerator
                         IntegerLit(4);
                         pAsmBuffer.PutLine();
                     };
-                } else if (pExprType == pCharType)
+                } else if (pExprType == Globals.pCharType)
                 {
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.WriteChar);
+                        NameLit(WriteChar);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -422,7 +422,7 @@ partial class TCodeGenerator
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.WriteString);
+                        NameLit(WriteString);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -446,12 +446,12 @@ partial class TCodeGenerator
             {
                 Operator(TInstruction.Call);
                 pAsmBuffer.Put('\t');
-                NameLit(DefineConstants.WriteLine);
+                NameLit(WriteLine);
                 pAsmBuffer.PutLine();
             };
         }
 
-        return pDummyType;
+        return Globals.pDummyType;
     }
 
     //--------------------------------------------------------------
@@ -464,12 +464,12 @@ partial class TCodeGenerator
         {
             Operator(TInstruction.Call);
             pAsmBuffer.Put('\t');
-            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcEof) != 0 ? DefineConstants.StdEof : DefineConstants.StdEoln);
+            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcEof) != 0 ? StdEof : StdEoln);
             pAsmBuffer.PutLine();
         };
 
         GetToken(); // token after function name
-        return pBooleanType;
+        return Globals.pBooleanType;
     }
 
     //--------------------------------------------------------------
@@ -488,9 +488,9 @@ partial class TCodeGenerator
         {
 
             case TRoutineCode.RcAbs:
-            if (pParmType == pIntegerType)
+            if (pParmType == Globals.pIntegerType)
             {
-                int nonNegativeLabelIndex = ++asmLabelIndex;
+                int nonNegativeLabelIndex = ++Globals.asmLabelIndex;
 
                 {
                     Operator(TInstruction.Cmp);
@@ -503,7 +503,7 @@ partial class TCodeGenerator
                 {
                     Operator(TInstruction.Jge);
                     pAsmBuffer.Put('\t');
-                    Label(DefineConstants.StmtLabelPrefix, nonNegativeLabelIndex);
+                    Label(StmtLabelPrefix, nonNegativeLabelIndex);
                     pAsmBuffer.PutLine();
                 };
                 {
@@ -520,7 +520,7 @@ partial class TCodeGenerator
                 {
                     Operator(TInstruction.Call);
                     pAsmBuffer.Put('\t');
-                    NameLit(DefineConstants.StdAbs);
+                    NameLit(StdAbs);
                     pAsmBuffer.PutLine();
                 };
                 {
@@ -535,7 +535,7 @@ partial class TCodeGenerator
             break;
 
             case TRoutineCode.RcSqr:
-            if (pParmType == pIntegerType)
+            if (pParmType == Globals.pIntegerType)
             {
                 {
                     Operator(TInstruction.Mov);
@@ -558,7 +558,7 @@ partial class TCodeGenerator
                 {
                     Operator(TInstruction.Call);
                     pAsmBuffer.Put('\t');
-                    NameLit(DefineConstants.FloatMultiply);
+                    NameLit(FloatMultiply);
                     pAsmBuffer.PutLine();
                 };
                 {
@@ -586,7 +586,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public TType EmitArctanCosExpLnSinSqrtCall ( TSymtabNode pRoutineId )
     {
-        string stdFuncName;
+        string stdFuncName = null;
 
         GetToken(); // (
         GetToken();
@@ -594,7 +594,7 @@ partial class TCodeGenerator
         //--Evaluate the parameter, and convert an integer value to
         //--real if necessary.
         TType pParmType = EmitExpression().Base();
-        if (pParmType == pIntegerType)
+        if (pParmType == Globals.pIntegerType)
         {
             {
                 Operator(TInstruction.Push);
@@ -605,7 +605,7 @@ partial class TCodeGenerator
             {
                 Operator(TInstruction.Call);
                 pAsmBuffer.Put('\t');
-                NameLit(DefineConstants.FloatConvert);
+                NameLit(FloatConvert);
                 pAsmBuffer.PutLine();
             };
             {
@@ -618,27 +618,27 @@ partial class TCodeGenerator
             };
         }
 
-        EmitPushOperand(pRealType);
+        EmitPushOperand(Globals.pRealType);
 
         switch (pRoutineId.defn.routine.which)
         {
             case TRoutineCode.RcArctan:
-            stdFuncName = DefineConstants.StdArctan;
+            stdFuncName = StdArctan;
             break;
             case TRoutineCode.RcCos:
-            stdFuncName = DefineConstants.StdCos;
+            stdFuncName = StdCos;
             break;
             case TRoutineCode.RcExp:
-            stdFuncName = DefineConstants.StdExp;
+            stdFuncName = StdExp;
             break;
             case TRoutineCode.RcLn:
-            stdFuncName = DefineConstants.StdLn;
+            stdFuncName = StdLn;
             break;
             case TRoutineCode.RcSin:
-            stdFuncName = DefineConstants.StdSin;
+            stdFuncName = StdSin;
             break;
             case TRoutineCode.RcSqrt:
-            stdFuncName = DefineConstants.StdSqrt;
+            stdFuncName = StdSqrt;
             break;
         }
 
@@ -658,7 +658,7 @@ partial class TCodeGenerator
         };
 
         GetToken(); // token after )
-        return pRealType;
+        return Globals.pRealType;
     }
 
     //--------------------------------------------------------------
@@ -697,7 +697,7 @@ partial class TCodeGenerator
         EmitExpression();
 
         GetToken(); // token after )
-        return pCharType;
+        return Globals.pCharType;
     }
 
     //--------------------------------------------------------------
@@ -721,7 +721,7 @@ partial class TCodeGenerator
         };
 
         GetToken(); // token after )
-        return pBooleanType;
+        return Globals.pBooleanType;
     }
 
     //--------------------------------------------------------------
@@ -736,7 +736,7 @@ partial class TCodeGenerator
         EmitExpression();
 
         GetToken(); // token after )
-        return pIntegerType;
+        return Globals.pIntegerType;
     }
 
     //--------------------------------------------------------------
@@ -751,11 +751,11 @@ partial class TCodeGenerator
         GetToken();
         EmitExpression();
 
-        EmitPushOperand(pRealType);
+        EmitPushOperand(Globals.pRealType);
         {
             Operator(TInstruction.Call);
             pAsmBuffer.Put('\t');
-            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcRound) != 0 ? DefineConstants.StdRound : DefineConstants.StdTrunc);
+            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcRound) != 0 ? StdRound : StdTrunc);
             pAsmBuffer.PutLine();
         };
         {
@@ -768,6 +768,6 @@ partial class TCodeGenerator
         };
 
         GetToken(); // token after )
-        return pIntegerType;
+        return Globals.pIntegerType;
     }
 }

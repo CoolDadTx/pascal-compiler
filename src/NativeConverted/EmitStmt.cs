@@ -83,7 +83,7 @@ partial class TCodeGenerator
         TType pTargetType = pTargetId.pType;
         // ptr to target type object
         TType pExprType; // ptr to expression type object
-        int addressOnStack; // true if target address has been pushed
+        bool addressOnStack; // true if target address has been pushed
                             //   onto the runtime stack
 
         //--Assignment to a function name.
@@ -97,7 +97,7 @@ partial class TCodeGenerator
         //--Assignment to a nonscalar, a formal VAR parameter, or to
         //--a nonglobal and nonlocal variable. EmitVariable emits code
         //--that leaves the target address on top of the runtime stack.
-        else if ((pTargetId.defn.how == TDefnCode.DcVarParm) || (pTargetType.IsScalar() == 0) || ((pTargetId.level > 1) && (pTargetId.level < currentNestingLevel)))
+        else if ((pTargetId.defn.how == TDefnCode.DcVarParm) || !pTargetType.IsScalar() || ((pTargetId.level > 1) && (pTargetId.level < Globals.currentNestingLevel)))
         {
             pTargetType = EmitVariable(pTargetId, true);
             addressOnStack = true;
@@ -117,9 +117,9 @@ partial class TCodeGenerator
         pExprType = EmitExpression();
 
         //--Emit code to do the assignment.
-        if ((pTargetType.Base() == pIntegerType) || (pTargetType.Base().form == TFormCode.FcEnum))
+        if ((pTargetType.Base() == Globals.pIntegerType) || (pTargetType.Base().form == TFormCode.FcEnum))
         {
-            if (addressOnStack != 0)
+            if (addressOnStack)
             {
                 {
                     Operator(TInstruction.Pop);
@@ -144,11 +144,11 @@ partial class TCodeGenerator
                 Reg(TRegister.Ax);
                 pAsmBuffer.PutLine();
             };
-        } else if (pTargetType.Base() == pCharType)
+        } else if (pTargetType.Base() == Globals.pCharType)
         {
 
             //--char := char
-            if (addressOnStack != 0)
+            if (addressOnStack)
             {
                 {
                     Operator(TInstruction.Pop);
@@ -173,11 +173,11 @@ partial class TCodeGenerator
                 Reg(TRegister.Al);
                 pAsmBuffer.PutLine();
             };
-        } else if (pTargetType == pRealType)
+        } else if (pTargetType == Globals.pRealType)
         {
 
             //--real := ...
-            if (pExprType == pIntegerType)
+            if (pExprType == Globals.pIntegerType)
             {
 
                 {
@@ -190,7 +190,7 @@ partial class TCodeGenerator
                 {
                     Operator(TInstruction.Call);
                     pAsmBuffer.Put('\t');
-                    NameLit(DefineConstants.FloatConvert);
+                    NameLit(FloatConvert);
                     pAsmBuffer.PutLine();
                 };
                 {
@@ -204,7 +204,7 @@ partial class TCodeGenerator
             }
 
             //--... real
-            if (addressOnStack != 0)
+            if (addressOnStack)
             {
                 {
                     Operator(TInstruction.Pop);
@@ -306,8 +306,8 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitREPEAT ()
     {
-        int stmtListLabelIndex = ++asmLabelIndex;
-        int followLabelIndex = ++asmLabelIndex;
+        int stmtListLabelIndex = ++Globals.asmLabelIndex;
+        int followLabelIndex = ++Globals.asmLabelIndex;
 
         EmitStatementLabel(stmtListLabelIndex);
 
@@ -333,13 +333,13 @@ partial class TCodeGenerator
         {
             Operator(TInstruction.Je);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, followLabelIndex);
+            Label(StmtLabelPrefix, followLabelIndex);
             pAsmBuffer.PutLine();
         };
         {
             Operator(TInstruction.Jmp);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, stmtListLabelIndex);
+            Label(StmtLabelPrefix, stmtListLabelIndex);
             pAsmBuffer.PutLine();
         };
 
@@ -353,9 +353,9 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitWHILE ()
     {
-        int exprLabelIndex = ++asmLabelIndex;
-        int stmtLabelIndex = ++asmLabelIndex;
-        int followLabelIndex = ++asmLabelIndex;
+        int exprLabelIndex = ++Globals.asmLabelIndex;
+        int stmtLabelIndex = ++Globals.asmLabelIndex;
+        int followLabelIndex = ++Globals.asmLabelIndex;
 
         GetToken();
         GetLocationMarker(); // ignored
@@ -377,13 +377,13 @@ partial class TCodeGenerator
         {
             Operator(TInstruction.Je);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, stmtLabelIndex);
+            Label(StmtLabelPrefix, stmtLabelIndex);
             pAsmBuffer.PutLine();
         };
         {
             Operator(TInstruction.Jmp);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, followLabelIndex);
+            Label(StmtLabelPrefix, followLabelIndex);
             pAsmBuffer.PutLine();
         };
 
@@ -396,7 +396,7 @@ partial class TCodeGenerator
         {
             Operator(TInstruction.Jmp);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, exprLabelIndex);
+            Label(StmtLabelPrefix, exprLabelIndex);
             pAsmBuffer.PutLine();
         };
         EmitStatementLabel(followLabelIndex);
@@ -413,8 +413,8 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitIF ()
     {
-        int trueLabelIndex = ++asmLabelIndex;
-        int falseLabelIndex = ++asmLabelIndex;
+        int trueLabelIndex = ++Globals.asmLabelIndex;
+        int falseLabelIndex = ++Globals.asmLabelIndex;
 
         GetToken();
         GetLocationMarker(); // ignored
@@ -434,13 +434,13 @@ partial class TCodeGenerator
         {
             Operator(TInstruction.Je);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, trueLabelIndex);
+            Label(StmtLabelPrefix, trueLabelIndex);
             pAsmBuffer.PutLine();
         };
         {
             Operator(TInstruction.Jmp);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, falseLabelIndex);
+            Label(StmtLabelPrefix, falseLabelIndex);
             pAsmBuffer.PutLine();
         };
 
@@ -458,11 +458,11 @@ partial class TCodeGenerator
             GetToken();
             GetLocationMarker(); // ignored
 
-            int followLabelIndex = ++asmLabelIndex;
+            int followLabelIndex = ++Globals.asmLabelIndex;
             {
                 Operator(TInstruction.Jmp);
                 pAsmBuffer.Put('\t');
-                Label(DefineConstants.StmtLabelPrefix, followLabelIndex);
+                Label(StmtLabelPrefix, followLabelIndex);
                 pAsmBuffer.PutLine();
             };
 
@@ -489,9 +489,9 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitFOR ()
     {
-        int testLabelIndex = ++asmLabelIndex;
-        int stmtLabelIndex = ++asmLabelIndex;
-        int terminateLabelIndex = ++asmLabelIndex;
+        int testLabelIndex = ++Globals.asmLabelIndex;
+        int stmtLabelIndex = ++Globals.asmLabelIndex;
+        int terminateLabelIndex = ++Globals.asmLabelIndex;
 
         GetToken();
         GetLocationMarker(); // ignored
@@ -501,13 +501,13 @@ partial class TCodeGenerator
         TSymtabNode pControlId = pNode;
         TType pControlType = pNode.pType;
 
-        int charFlag = (pControlType.Base() == pCharType);
+        var charFlag = (pControlType.Base() == Globals.pCharType);
 
         //-- <id> := <expr-1>
         EmitAssignment(pControlId);
 
         //--TO or DOWNTO
-        int toFlag = token == TTokenCode.TcTO;
+        var toFlag = token == TTokenCode.TcTO;
 
         EmitStatementLabel(testLabelIndex);
 
@@ -515,7 +515,7 @@ partial class TCodeGenerator
         GetToken();
         EmitExpression();
 
-        if (charFlag != 0)
+        if (charFlag)
         {
             Operator(TInstruction.Cmp);
             pAsmBuffer.Put('\t');
@@ -533,15 +533,15 @@ partial class TCodeGenerator
             pAsmBuffer.PutLine();
         }
         {
-            Operator(toFlag != 0 ? TInstruction.Jle : TInstruction.Jge);
+            Operator(toFlag ? TInstruction.Jle : TInstruction.Jge);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, stmtLabelIndex);
+            Label(StmtLabelPrefix, stmtLabelIndex);
             pAsmBuffer.PutLine();
         };
         {
             Operator(TInstruction.Jmp);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, terminateLabelIndex);
+            Label(StmtLabelPrefix, terminateLabelIndex);
             pAsmBuffer.PutLine();
         };
 
@@ -552,26 +552,40 @@ partial class TCodeGenerator
         EmitStatement();
 
         {
-            Operator(toFlag != 0 ? TInstruction.Incr : TInstruction.Decr);
+            Operator(toFlag ? TInstruction.Incr : TInstruction.Decr);
             pAsmBuffer.Put('\t');
-            charFlag != 0 ? Byte(pControlId) : Word(pControlId);
+            if (charFlag)
+                Byte(pControlId);
+            else
+                Word(pControlId);
             pAsmBuffer.PutLine();
         };
         {
             Operator(TInstruction.Jmp);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, testLabelIndex);
+            Label(StmtLabelPrefix, testLabelIndex);
             pAsmBuffer.PutLine();
         };
 
         EmitStatementLabel(terminateLabelIndex);
 
         {
-            Operator(toFlag != 0 ? TInstruction.Decr : TInstruction.Incr);
+            Operator(toFlag ? TInstruction.Decr : TInstruction.Incr);
             pAsmBuffer.Put('\t');
-            charFlag != 0 ? Byte(pControlId) : Word(pControlId);
+            if (charFlag)
+                Byte(pControlId);
+            else
+                Word(pControlId);
             pAsmBuffer.PutLine();
         };
+    }
+
+    // C# does not allow declaring types within methods - EmitCASE
+    private struct TBranchEntry
+    {
+        public int labelValue { get; set; }
+        public int branchLocation { get; set; }
+        public int labelIndex {  get; set; }  
     }
 
     //--------------------------------------------------------------
@@ -586,31 +600,24 @@ partial class TCodeGenerator
     {
         int i;
         int j;
-        int followLabelIndex = ++asmLabelIndex;
+        int followLabelIndex = ++Globals.asmLabelIndex;
 
-        //C++ TO C# CONVERTER TODO TASK: C# does not allow declaring types within methods:
-        //	struct TBranchEntry
-        //	{
-        //	int labelValue;
-        //	int branchLocation;
-        //	int labelIndex;
-        //	}
-        *pBranchTable;
+        TBranchEntry[] pBranchTable = null;
 
         //--Get the locations of the token that follows the
         //--CASE statement and of the branch table.
         GetToken();
-        int atFollow = GetLocationMarker();
+        var atFollow = GetLocationMarker();
         GetToken();
-        int atBranchTable = GetLocationMarker();
+        var atBranchTable = GetLocationMarker();
 
         //--<epxr>
         GetToken();
         TType pExprType = EmitExpression();
 
-        int labelValue;
-        int branchLocation;
-        int charFlag = pExprType.Base() == pCharType;
+        int labelValue = 0;
+        int branchLocation = 0;
+        var charFlag = pExprType.Base() == Globals.pCharType;
 
         //--Loop through the branch table in the icode
         //--to count the number of entries.
@@ -618,7 +625,7 @@ partial class TCodeGenerator
         GoTo(atBranchTable + 1);
         for (; ; )
         {
-            GetCaseItem(labelValue, branchLocation);
+            GetCaseItem(ref labelValue, ref branchLocation);
             if (branchLocation == 0)
                 break;
             else
@@ -630,7 +637,7 @@ partial class TCodeGenerator
         GoTo(atBranchTable + 1);
         for (i = 0; i < count; ++i)
         {
-            GetCaseItem(labelValue, branchLocation);
+            GetCaseItem(ref labelValue, ref branchLocation);
             pBranchTable[i].labelValue = labelValue;
             pBranchTable[i].branchLocation = branchLocation;
         }
@@ -638,13 +645,16 @@ partial class TCodeGenerator
         //--Loop through the branch table copy to emit test code.
         for (i = 0; i < count; ++i)
         {
-            int testLabelIndex = ++asmLabelIndex;
-            int branchLabelIndex = ++asmLabelIndex;
+            int testLabelIndex = ++Globals.asmLabelIndex;
+            int branchLabelIndex = ++Globals.asmLabelIndex;
 
             {
                 Operator(TInstruction.Cmp);
                 pAsmBuffer.Put('\t');
-                charFlag != 0 ? Reg(TRegister.Al) : Reg(TRegister.Ax);
+                if (charFlag)
+                    Reg(TRegister.Al);
+                else
+                    Reg(TRegister.Ax);
                 pAsmBuffer.Put(',');
                 IntegerLit(pBranchTable[i].labelValue);
                 pAsmBuffer.PutLine();
@@ -652,7 +662,7 @@ partial class TCodeGenerator
             {
                 Operator(TInstruction.Jne);
                 pAsmBuffer.Put('\t');
-                Label(DefineConstants.StmtLabelPrefix, testLabelIndex);
+                Label(StmtLabelPrefix, testLabelIndex);
                 pAsmBuffer.PutLine();
             };
 
@@ -670,19 +680,19 @@ partial class TCodeGenerator
             {
                 Operator(TInstruction.Jmp);
                 pAsmBuffer.Put('\t');
-                Label(DefineConstants.StmtLabelPrefix, branchLabelIndex);
+                Label(StmtLabelPrefix, branchLabelIndex);
                 pAsmBuffer.PutLine();
             };
             EmitStatementLabel(testLabelIndex);
 
             //--Enter the branch label index into the branch table copy
             //--only if it is new; otherwise, enter 0.
-            pBranchTable[i].labelIndex = j < i != 0 ? 0 : branchLabelIndex;
+            pBranchTable[i].labelIndex = (j < i) ? 0 : branchLabelIndex;
         }
         {
             Operator(TInstruction.Jmp);
             pAsmBuffer.Put('\t');
-            Label(DefineConstants.StmtLabelPrefix, followLabelIndex);
+            Label(StmtLabelPrefix, followLabelIndex);
             pAsmBuffer.PutLine();
         };
 
@@ -690,7 +700,7 @@ partial class TCodeGenerator
         //--branch statement code that hasn't already been emitted.
         for (i = 0; i < count; ++i)
         {
-            if (pBranchTable[i].labelIndex)
+            if (pBranchTable[i].labelIndex != 0)
             {
                 GoTo(pBranchTable[i].branchLocation);
                 EmitStatementLabel(pBranchTable[i].labelIndex);
@@ -700,7 +710,7 @@ partial class TCodeGenerator
                 {
                     Operator(TInstruction.Jmp);
                     pAsmBuffer.Put('\t');
-                    Label(DefineConstants.StmtLabelPrefix, followLabelIndex);
+                    Label(StmtLabelPrefix, followLabelIndex);
                     pAsmBuffer.PutLine();
                 };
             }

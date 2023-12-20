@@ -26,7 +26,7 @@ partial class TCodeGenerator
         EmitProgramPrologue();
 
         //--Emit code for the program.
-        currentNestingLevel = 1;
+        Globals.currentNestingLevel = 1;
         EmitMain(pProgramId);
 
         EmitProgramEpilogue(pProgramId);
@@ -42,7 +42,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitStatementLabel ( int index )
     {
-        AsmText() = String.Format("{0}_{1:D3}:", DefineConstants.StmtLabelPrefix, index);
+        AsmText = String.Format("{0}_{1:D3}:", StmtLabelPrefix, index);
         PutLine();
     }
 
@@ -92,22 +92,20 @@ partial class TCodeGenerator
     //      pId : ptr to symbol table node
     //--------------------------------------------------------------
     public void EmitStackOffsetEquate ( TSymtabNode pId )
-    {
-        //C++ TO C# CONVERTER TODO TASK: C# does not have an equivalent to pointers to value types:
-        //ORIGINAL LINE: char *pName = pId->String();
-        char pName = pId.String();
+    {        
+        var pName = pId.String();
         int labelIndex = pId.labelIndex;
         int offset = pId.defn.data.offset;
         TType pType = pId.pType;
 
-        if (pType == pCharType)
+        if (pType == Globals.pCharType)
             //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
             //ORIGINAL LINE: sprintf(AsmText(), "%s_%03d\tEQU\t<BYTE PTR [bp%+d]>", pName, labelIndex, offset);
-            AsmText() = String.Format("{0}_{1:D3}\tEQU\t<BYTE PTR [bp%+d]>", pName, labelIndex, offset);
+            AsmText = String.Format("{0}_{1:D3}\tEQU\t<BYTE PTR [bp%+d]>", pName, labelIndex, offset);
         else
             //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
             //ORIGINAL LINE: sprintf(AsmText(), "%s_%03d\tEQU\t<WORD PTR [bp%+d]>", pName, labelIndex, offset);
-            AsmText() = String.Format("{0}_{1:D3}\tEQU\t<WORD PTR [bp%+d]>", pName, labelIndex, offset);
+            AsmText = String.Format("{0}_{1:D3}\tEQU\t<WORD PTR [bp%+d]>", pName, labelIndex, offset);
 
         PutLine();
     }
@@ -128,7 +126,7 @@ partial class TCodeGenerator
     public void EmitAdjustBP ( int level )
     {
         //--Don't do anything if local or global.
-        if ((level == currentNestingLevel) || (level == 1))
+        if ((level == Globals.currentNestingLevel) || (level == 1))
             return;
 
         {
@@ -147,10 +145,10 @@ partial class TCodeGenerator
                 pAsmBuffer.Put('\t');
                 Reg(TRegister.Bp);
                 pAsmBuffer.Put(',');
-                NameLit(DefineConstants.StaticLink);
+                NameLit(StaticLink);
                 pAsmBuffer.PutLine();
             }; // chase
-        } while (++level < currentNestingLevel);
+        } while (++level < Globals.currentNestingLevel);
     }
 
     //--------------------------------------------------------------
@@ -163,7 +161,7 @@ partial class TCodeGenerator
     public void EmitRestoreBP ( int level )
     {
         //--Don't do anything if local or global.
-        if ((level == currentNestingLevel) || (level == 1))
+        if ((level == Globals.currentNestingLevel) || (level == 1))
             return;
 
         {
@@ -201,7 +199,7 @@ partial class TCodeGenerator
                 Word(pId);
                 pAsmBuffer.PutLine();
             };
-            if (pType == pCharType)
+            if (pType == Globals.pCharType)
             {
 
                 {
@@ -221,7 +219,7 @@ partial class TCodeGenerator
                     ByteIndirect(TRegister.Bx);
                     pAsmBuffer.PutLine();
                 };
-            } else if (pType == pRealType)
+            } else if (pType == Globals.pRealType)
             {
 
                 {
@@ -258,7 +256,7 @@ partial class TCodeGenerator
         {
 
             //--Load the value into ax or dx:ax.
-            if (pType == pCharType)
+            if (pType == Globals.pCharType)
             {
 
                 {
@@ -278,7 +276,7 @@ partial class TCodeGenerator
                     Byte(pId);
                     pAsmBuffer.PutLine();
                 };
-            } else if (pType == pRealType)
+            } else if (pType == Globals.pRealType)
             {
 
                 {
@@ -333,7 +331,7 @@ partial class TCodeGenerator
             pAsmBuffer.Put('\t');
             Reg(TRegister.Ax);
             pAsmBuffer.Put(',');
-            WordLabel(DefineConstants.FloatLabelPrefix, pNode.labelIndex);
+            WordLabel(FloatLabelPrefix, pNode.labelIndex);
             pAsmBuffer.PutLine();
         };
         {
@@ -341,7 +339,7 @@ partial class TCodeGenerator
             pAsmBuffer.Put('\t');
             Reg(TRegister.Dx);
             pAsmBuffer.Put(',');
-            HighDWordLabel(DefineConstants.FloatLabelPrefix, pNode.labelIndex);
+            HighDWordLabel(FloatLabelPrefix, pNode.labelIndex);
             pAsmBuffer.PutLine();
         };
 
@@ -375,7 +373,7 @@ partial class TCodeGenerator
             pAsmBuffer.Put('\t');
             Reg(TRegister.Ax);
             pAsmBuffer.Put(',');
-            WordLabel(DefineConstants.StringLabelPrefix, pNode.labelIndex);
+            WordLabel(StringLabelPrefix, pNode.labelIndex);
             pAsmBuffer.PutLine();
         };
         {
@@ -405,10 +403,10 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitPushOperand ( TType pType )
     {
-        if (pType.IsScalar() == 0)
+        if (!pType.IsScalar())
             return;
 
-        if (pType == pRealType)
+        if (pType == Globals.pRealType)
         {
             Operator(TInstruction.Push);
             pAsmBuffer.Put('\t');
@@ -432,12 +430,12 @@ partial class TCodeGenerator
     public void EmitPushAddress ( TSymtabNode pId )
     {
         int varLevel = pId.level;
-        int isVarParm = (int)pId.defn.how == (int)TDefnCode.DcVarParm;
+        var isVarParm = (int)pId.defn.how == (int)TDefnCode.DcVarParm;
 
         EmitAdjustBP(varLevel);
 
         {
-            Operator(isVarParm != 0 ? TInstruction.Mov : TInstruction.Lea);
+            Operator(isVarParm ? TInstruction.Mov : TInstruction.Lea);
             pAsmBuffer.Put('\t');
             Reg(TRegister.Ax);
             pAsmBuffer.Put(',');
@@ -471,7 +469,7 @@ partial class TCodeGenerator
             pAsmBuffer.Put('\t');
             Reg(TRegister.Ax);
             pAsmBuffer.Put(',');
-            NameLit(DefineConstants.ReturnValue);
+            NameLit(ReturnValue);
             pAsmBuffer.PutLine();
         };
         {
@@ -493,12 +491,12 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitPromoteToReal ( TType pType1, TType pType2 )
     {
-        if (pType2 == pIntegerType)
+        if (pType2 == Globals.pIntegerType)
         { // xxx_1 integer_2
             {
                 Operator(TInstruction.Call);
                 pAsmBuffer.Put('\t');
-                NameLit(DefineConstants.FloatConvert);
+                NameLit(FloatConvert);
                 pAsmBuffer.PutLine();
             };
             {
@@ -523,7 +521,7 @@ partial class TCodeGenerator
             }; // xxx_1 real_2
         }
 
-        if (pType1 == pIntegerType)
+        if (pType1 == Globals.pIntegerType)
         { // integer_1 real_2
             {
                 Operator(TInstruction.Pop);
@@ -565,7 +563,7 @@ partial class TCodeGenerator
             {
                 Operator(TInstruction.Call);
                 pAsmBuffer.Put('\t');
-                NameLit(DefineConstants.FloatConvert);
+                NameLit(FloatConvert);
                 pAsmBuffer.PutLine();
             };
             {

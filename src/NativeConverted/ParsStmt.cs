@@ -34,7 +34,7 @@ partial class TParser
                 //--Search for the identifier and enter it if
                 //--necessary.  Append the symbol table node handle
                 //--to the icode.
-                TSymtabNode pNode = Find(pToken.String());
+                TSymtabNode pNode = Find(pToken.String);
                 icode.Put(pNode);
 
                 //--Based on how the identifier is defined,
@@ -42,7 +42,7 @@ partial class TParser
                 if (pNode.defn.how == TDefnCode.DcUndefined)
                 {
                     pNode.defn.how = TDefnCode.DcVariable;
-                    SetType(pNode.pType, pDummyType);
+                    SetType(pNode.pType, Globals.pDummyType);
                     ParseAssignment(pNode);
                 } else if (pNode.defn.how == TDefnCode.DcProcedure)
                 {
@@ -94,7 +94,7 @@ partial class TParser
             ParseStatement();
 
             if (TokenIn(token, tlStatementStart) != 0)
-                Error(TErrorCode.ErrMissingSemicolon);
+                Globals.Error(TErrorCode.ErrMissingSemicolon);
             else
             {
                 while (token == TTokenCode.TcSemicolon)
@@ -234,25 +234,25 @@ partial class TParser
         {
 
             //--Verify the definition and type of the control id.
-            TSymtabNode pControlId = Find(pToken.String());
+            TSymtabNode pControlId = Find(pToken.String);
             if (pControlId.defn.how != TDefnCode.DcUndefined)
                 pControlType = pControlId.pType.Base();
             else
             {
                 pControlId.defn.how = TDefnCode.DcVariable;
-                pControlType = pControlId.pType = pIntegerType;
+                pControlType = pControlId.pType = Globals.pIntegerType;
             }
-            if ((pControlType != pIntegerType) && (pControlType != pCharType) && (pControlType.form != TFormCode.FcEnum))
+            if ((pControlType != Globals.pIntegerType) && (pControlType != Globals.pCharType) && (pControlType.form != TFormCode.FcEnum))
             {
-                Error(TErrorCode.ErrIncompatibleTypes);
-                pControlType = pIntegerType;
+                Globals.Error(TErrorCode.ErrIncompatibleTypes);
+                pControlType = Globals.pIntegerType;
             }
 
             icode.Put(pControlId);
             GetTokenAppend();
         } else
         {
-            Error(TErrorCode.ErrMissingIdentifier);
+            Globals.Error(TErrorCode.ErrMissingIdentifier);
         }
 
         //-- :=
@@ -267,7 +267,7 @@ partial class TParser
         if (TokenIn(token, tlTODOWNTO) != 0)
             GetTokenAppend();
         else
-            Error(TErrorCode.ErrMissingTOorDOWNTO);
+            Globals.Error(TErrorCode.ErrMissingTOorDOWNTO);
 
         //--<expr-2>
         CheckAssignmentTypeCompatible(pControlType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
@@ -292,7 +292,7 @@ partial class TParser
     public void ParseCASE ()
     {
         TCaseItem pCaseItemList; // ptr to list of CASE items
-        int caseBranchFlag; // true if another CASE branch,
+        var caseBranchFlag = false; // true if another CASE branch,
                             //   else false
 
         pCaseItemList = null;
@@ -308,8 +308,8 @@ partial class TParser
         TType pExprType = ParseExpression().Base();
 
         //--Verify the type of the CASE expression.
-        if ((pExprType != pIntegerType) && (pExprType != pCharType) && (pExprType.form != TFormCode.FcEnum))
-            Error(TErrorCode.ErrIncompatibleTypes);
+        if ((pExprType != Globals.pIntegerType) && (pExprType != Globals.pCharType) && (pExprType.form != TFormCode.FcEnum))
+            Globals.Error(TErrorCode.ErrIncompatibleTypes);
 
         //--OF
         Resync(tlOF, tlCaseLabelStart);
@@ -328,7 +328,7 @@ partial class TParser
                 caseBranchFlag = true;
             } else if (TokenIn(token, tlCaseLabelStart))
             {
-                Error(TErrorCode.ErrMissingSemicolon);
+                Globals.Error(TErrorCode.ErrMissingSemicolon);
                 caseBranchFlag = true;
             } else
             {
@@ -365,7 +365,7 @@ partial class TParser
     //--------------------------------------------------------------
     public void ParseCaseBranch ( TType pExprType, ref TCaseItem pCaseItemList )
     {
-        int caseLabelFlag; // true if another CASE label, else false
+        var caseLabelFlag = false; // true if another CASE label, else false
 
         //--<case-label-list>
         do
@@ -380,7 +380,7 @@ partial class TParser
                     caseLabelFlag = true;
                 else
                 {
-                    Error(TErrorCode.ErrMissingConstant);
+                    Globals.Error(TErrorCode.ErrMissingConstant);
                     caseLabelFlag = false;
                 }
             } else
@@ -388,7 +388,7 @@ partial class TParser
                 caseLabelFlag = false;
             }
 
-        } while (caseLabelFlag != 0);
+        } while (caseLabelFlag);
 
         //-- :
         Resync(tlColon, tlStatementStart);
@@ -396,7 +396,7 @@ partial class TParser
 
         //--Loop to set the branch statement location into each CASE item
         //--for this branch.
-        for (TCaseItem* pItem = pCaseItemList; pItem && (pItem.atBranchStmt == 0); pItem = pItem.next)
+        for (var pItem = pCaseItemList; pItem && !pItem.atBranchStmt; pItem = pItem.next)
             pItem.atBranchStmt = icode.CurrentLocation() - 1;
 
         //--<stmt>
@@ -412,7 +412,7 @@ partial class TParser
     public void ParseCaseLabel ( TType pExprType, ref TCaseItem pCaseItemList )
     {
         TType pLabelType; // ptr to the CASE label's type object
-        int signFlag = false; // true if unary sign, else false
+        var signFlag = false; // true if unary sign, else false
 
         //--Allocate a new CASE item and insert it at the head of the list.
         TCaseItem pCaseItem = new TCaseItem(ref pCaseItemList);
@@ -432,7 +432,7 @@ partial class TParser
             case TTokenCode.TcIdentifier:
             {
 
-                TSymtabNode pLabelId = Find(pToken.String());
+                TSymtabNode pLabelId = Find(pToken.String);
                 icode.Put(pLabelId);
 
                 if (pLabelId.defn.how != TDefnCode.DcUndefined)
@@ -440,19 +440,19 @@ partial class TParser
                 else
                 {
                     pLabelId.defn.how = TDefnCode.DcConstant;
-                    SetType(pLabelId.pType, pDummyType);
-                    pLabelType = pDummyType;
+                    SetType(pLabelId.pType, Globals.pDummyType);
+                    pLabelType = Globals.pDummyType;
                 }
                 if (pExprType != pLabelType)
-                    Error(TErrorCode.ErrIncompatibleTypes);
+                    Globals.Error(TErrorCode.ErrIncompatibleTypes);
 
                 //--Only an integer constant can have a unary sign.
-                if (signFlag != 0 && (pLabelType != pIntegerType))
-                    Error(TErrorCode.ErrInvalidConstant);
+                if (signFlag && (pLabelType != Globals.pIntegerType))
+                    Globals.Error(TErrorCode.ErrInvalidConstant);
 
                 //--Set the label value into the CASE item.
-                if ((pLabelType == pIntegerType) || (pLabelType.form == TFormCode.FcEnum))
-                    pCaseItem.labelValue = signFlag != 0 ? -pLabelId.defn.constant.value.integer : pLabelId.defn.constant.value.integer;
+                if ((pLabelType == Globals.pIntegerType) || (pLabelType.form == TFormCode.FcEnum))
+                    pCaseItem.labelValue = signFlag ? -pLabelId.defn.constant.value.integer : pLabelId.defn.constant.value.integer;
                 else
                     pCaseItem.labelValue = pLabelId.defn.constant.value.character;
 
@@ -466,21 +466,21 @@ partial class TParser
             {
 
                 if (pToken.Type() != TDataType.TyInteger)
-                    Error(TErrorCode.ErrInvalidConstant);
-                if (pExprType != pIntegerType)
-                    Error(TErrorCode.ErrIncompatibleTypes);
+                    Globals.Error(TErrorCode.ErrInvalidConstant);
+                if (pExprType != Globals.pIntegerType)
+                    Globals.Error(TErrorCode.ErrIncompatibleTypes);
 
-                TSymtabNode pNode = SearchAll(pToken.String());
+                TSymtabNode pNode = SearchAll(pToken.String);
                 if (pNode == null)
                 {
-                    pNode = EnterLocal(pToken.String());
+                    pNode = EnterLocal(pToken.String);
                     pNode.pType = pIntegerType;
                     pNode.defn.constant.value.integer = pToken.Value().integer;
                 }
                 icode.Put(pNode);
 
                 //--Set the label value into the CASE item.
-                pCaseItem.labelValue = signFlag != 0 ? -pNode.defn.constant.value.integer : pNode.defn.constant.value.integer;
+                pCaseItem.labelValue = signFlag ? -pNode.defn.constant.value.integer : pNode.defn.constant.value.integer;
 
                 GetTokenAppend();
                 break;
@@ -492,22 +492,22 @@ partial class TParser
             case TTokenCode.TcString:
             {
 
-                if (signFlag != 0 || (Convert.ToString(pToken.String()).Length != 3))
-                    Error(TErrorCode.ErrInvalidConstant);
-                if (pExprType != pCharType)
-                    Error(TErrorCode.ErrIncompatibleTypes);
+                if (signFlag || (Convert.ToString(pToken.String).Length != 3))
+                    Globals.Error(TErrorCode.ErrInvalidConstant);
+                if (pExprType != Globals.pCharType)
+                    Globals.Error(TErrorCode.ErrIncompatibleTypes);
 
-                TSymtabNode pNode = SearchAll(pToken.String());
+                TSymtabNode pNode = SearchAll(pToken.String);
                 if (pNode == null)
                 {
-                    pNode = EnterLocal(pToken.String());
-                    pNode.pType = pCharType;
-                    pNode.defn.constant.value.character = pToken.String()[1];
+                    pNode = EnterLocal(pToken.String);
+                    pNode.pType = Globals.pCharType;
+                    pNode.defn.constant.value.character = pToken.String[1];
                 }
                 icode.Put(pNode);
 
                 //--Set the label value into the CASE item.
-                pCaseItem.labelValue = pToken.String()[1];
+                pCaseItem.labelValue = pToken.String[1];
 
                 GetTokenAppend();
                 break;

@@ -37,7 +37,7 @@ partial class TParser
         {
 
             //--<id>
-            TSymtabNode pTypeId = EnterNewLocal(pToken.String());
+            TSymtabNode pTypeId = EnterNewLocal(pToken.String);
 
             //--Link the routine's local type id nodes together.
             if (!pRoutineId.defn.routine.locals.pTypeIds)
@@ -83,7 +83,7 @@ partial class TParser
             //--Type identifier
             case TTokenCode.TcIdentifier:
             {
-                TSymtabNode pId = Find(pToken.String());
+                TSymtabNode pId = Find(pToken.String);
 
                 switch (pId.defn.how)
                 {
@@ -93,9 +93,9 @@ partial class TParser
                     return ParseSubrangeType(pId);
 
                     default:
-                    Error(TErrorCode.ErrNotATypeIdentifier);
+                    Globals.Error(TErrorCode.ErrNotATypeIdentifier);
                     GetToken();
-                    return (pDummyType);
+                    return Globals.pDummyType;
                 }
             }
 
@@ -114,8 +114,8 @@ partial class TParser
             return ParseSubrangeType(null);
 
             default:
-            Error(TErrorCode.ErrInvalidType);
-            return (pDummyType);
+            Globals.Error(TErrorCode.ErrInvalidType);
+            return Globals.pDummyType;
         }
     }
 
@@ -168,7 +168,7 @@ partial class TParser
         //--Loop to parse list of constant identifiers separated by commas.
         while (token == TTokenCode.TcIdentifier)
         {
-            TSymtabNode pConstId = EnterNewLocal(pToken.String());
+            TSymtabNode pConstId = EnterNewLocal(pToken.String);
             ++constValue;
 
             if (pConstId.defn.how == TDefnCode.DcUndefined)
@@ -200,13 +200,13 @@ partial class TParser
                     GetToken();
                     Resync(tlEnumConstStart, tlEnumConstFollow);
                     if (token == TTokenCode.TcComma)
-                        Error(TErrorCode.ErrMissingIdentifier);
+                        Globals.Error(TErrorCode.ErrMissingIdentifier);
                 } while (token == TTokenCode.TcComma);
                 if (token != TTokenCode.TcIdentifier)
-                    Error(TErrorCode.ErrMissingIdentifier);
+                    Globals.Error(TErrorCode.ErrMissingIdentifier);
             } else if (token == TTokenCode.TcIdentifier)
             {
-                Error(TErrorCode.ErrMissingComma);
+                Globals.Error(TErrorCode.ErrMissingComma);
             }
         }
 
@@ -250,11 +250,11 @@ partial class TParser
         //--Check limits.
         if (pMaxType != pType.subrange.pBaseType)
         {
-            Error(TErrorCode.ErrIncompatibleTypes);
+            Globals.Error(TErrorCode.ErrIncompatibleTypes);
             pType.subrange.min = pType.subrange.max = 0;
         } else if (pType.subrange.min > pType.subrange.max)
         {
-            Error(TErrorCode.ErrMinGtMax);
+            Globals.Error(TErrorCode.ErrMinGtMax);
 
             int temp = pType.subrange.min;
             pType.subrange.min = pType.subrange.max;
@@ -278,7 +278,7 @@ partial class TParser
     //--------------------------------------------------------------
     public TType ParseSubrangeLimit ( TSymtabNode pLimitId, ref int limit )
     {
-        TType pType = pDummyType; // type to return
+        TType pType = Globals.pDummyType; // type to return
         TTokenCode sign = TTokenCode.TcDummy; // unary + or - sign, or none
 
         limit = 0;
@@ -299,11 +299,11 @@ partial class TParser
             //--Numeric constant:  Integer type only.
             if (pToken.Type() == TDataType.TyInteger)
             {
-                limit = (int)sign == ((int)TTokenCode.TcMinus) != 0 ? -pToken.Value().integer : pToken.Value().integer;
-                pType = pIntegerType;
+                limit = sign == TTokenCode.TcMinus ? -pToken.Value().integer : pToken.Value().integer;
+                pType = Globals.pIntegerType;
             } else
             {
-                Error(TErrorCode.ErrInvalidSubrangeType);
+                Globals.Error(TErrorCode.ErrInvalidSubrangeType);
             }
             break;
 
@@ -312,52 +312,52 @@ partial class TParser
             //--Identifier limit:  Must be integer, character, or
             //--                   enumeration type.
             if (pLimitId == null)
-                pLimitId = Find(pToken.String());
+                pLimitId = Find(pToken.String);
 
             if (pLimitId.defn.how == TDefnCode.DcUndefined)
             {
                 pLimitId.defn.how = TDefnCode.DcConstant;
-                pType = SetType(pLimitId.pType, pDummyType);
+                pType = SetType(pLimitId.pType, Globals.pDummyType);
                 break;
-            } else if ((pLimitId.pType == pRealType) || (pLimitId.pType == pDummyType) || (pLimitId.pType.form == TFormCode.FcArray))
-                Error(TErrorCode.ErrInvalidSubrangeType);
+            } else if ((pLimitId.pType == Globals.pRealType) || (pLimitId.pType == Globals.pDummyType) || (pLimitId.pType.form == TFormCode.FcArray))
+                Globals.Error(TErrorCode.ErrInvalidSubrangeType);
             else if (pLimitId.defn.how == TDefnCode.DcConstant)
             {
 
                 //--Use the value of the constant identifier.
-                if (pLimitId.pType == pIntegerType)
-                    limit = (int)sign == ((int)TTokenCode.TcMinus) != 0 ? -pLimitId.defn.constant.value.integer : pLimitId.defn.constant.value.integer;
-                else if (pLimitId.pType == pCharType)
+                if (pLimitId.pType == Globals.pIntegerType)
+                    limit = sign == TTokenCode.TcMinus ? -pLimitId.defn.constant.value.integer : pLimitId.defn.constant.value.integer;
+                else if (pLimitId.pType == Globals.pCharType)
                 {
                     if (sign != TTokenCode.TcDummy)
-                        Error(TErrorCode.ErrInvalidConstant);
+                        Globals.Error(TErrorCode.ErrInvalidConstant);
                     limit = pLimitId.defn.constant.value.character;
                 } else if (pLimitId.pType.form == TFormCode.FcEnum)
                 {
                     if (sign != TTokenCode.TcDummy)
-                        Error(TErrorCode.ErrInvalidConstant);
+                        Globals.Error(TErrorCode.ErrInvalidConstant);
                     limit = pLimitId.defn.constant.value.integer;
                 }
                 pType = pLimitId.pType;
             } else
-                Error(TErrorCode.ErrNotAConstantIdentifier);
+                Globals.Error(TErrorCode.ErrNotAConstantIdentifier);
             break;
 
             case TTokenCode.TcString:
 
             //--String limit:  Character type only.
             if (sign != TTokenCode.TcDummy)
-                Error(TErrorCode.ErrInvalidConstant);
+                Globals.Error(TErrorCode.ErrInvalidConstant);
 
-            if (Convert.ToString(pToken.String()).Length != 3)
-                Error(TErrorCode.ErrInvalidSubrangeType);
+            if (Convert.ToString(pToken.String).Length != 3)
+                Globals.Error(TErrorCode.ErrInvalidSubrangeType);
 
-            limit = pToken.String()[1];
-            pType = pCharType;
+            limit = pToken.String[1];
+            pType = Globals.pCharType;
             break;
 
             default:
-            Error(TErrorCode.ErrMissingConstant);
+            Globals.Error(TErrorCode.ErrMissingConstant);
             return pType; // don't get another token
         }
 

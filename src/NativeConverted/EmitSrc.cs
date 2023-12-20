@@ -25,7 +25,7 @@ partial class TCodeGenerator
     public void StartComment ( int n )
     {
         Reset();
-        AsmText() = String.Format("; {{{0:D}}} ", n);
+        AsmText = String.Format("; {{{0:D}}} ", n);
         Advance();
     }
 
@@ -60,7 +60,7 @@ partial class TCodeGenerator
             StartComment();
         }
 
-        AsmText() = pString;
+        AsmText = pString;
         Advance();
     }
 
@@ -106,7 +106,7 @@ partial class TCodeGenerator
     public void EmitSubroutineHeaderComment ( TSymtabNode pRoutineId )
     {
         PutLine();
-        StartComment(pRoutineId.defn.how == ((int)TDefnCode.DcProcedure) != 0 ? "PROCEDURE " : "FUNCTION ");
+        StartComment(pRoutineId.defn.how == TDefnCode.DcProcedure ? "PROCEDURE " : "FUNCTION ");
         //--Emit the procedure or function name
         //--followed by the formal parameter list.
         PutComment(pRoutineId.String());
@@ -141,7 +141,7 @@ partial class TCodeGenerator
         {
             TDefnCode commonDefn = pParmId.defn.how; // common defn
             TType pCommonType = pParmId.pType; // common type
-            int doneFlag; // true if sublist done, false if not
+            bool doneFlag; // true if sublist done, false if not
 
             if (commonDefn == TDefnCode.DcVarParm)
                 PutComment("VAR ");
@@ -153,9 +153,9 @@ partial class TCodeGenerator
 
                 pParmId = pParmId.next;
                 doneFlag = (pParmId == null) || (commonDefn != pParmId.defn.how) || (pCommonType != pParmId.pType);
-                if (doneFlag == 0)
+                if (!doneFlag)
                     PutComment(", ");
-            } while (doneFlag == 0);
+            } while (!doneFlag);
 
             //--Print the sublist's common type.
             PutComment(" : ");
@@ -231,7 +231,7 @@ partial class TCodeGenerator
     public void EmitStmtComment ()
     {
         SaveState(); // save icode state
-        StartComment(currentLineNumber);
+        StartComment(Globals.currentLineNumber);
 
         switch (token)
         {
@@ -348,7 +348,7 @@ partial class TCodeGenerator
 
         GetToken();
         EmitExprComment();
-        PutComment(token == ((int)TTokenCode.TcTO) != 0 ? " TO " : " DOWNTO ");
+        PutComment(token == TTokenCode.TcTO ? " TO " : " DOWNTO ");
 
         GetToken();
         EmitExprComment();
@@ -381,7 +381,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public void EmitExprComment ()
     {
-        int doneFlag = false; // true if done with expression, false if not
+        var doneFlag = false; // true if done with expression, false if not
 
         //--Loop over the entire expression.
         do
@@ -393,12 +393,12 @@ partial class TCodeGenerator
                 break;
 
                 case TTokenCode.TcNumber:
-                PutComment(pToken.String());
+                PutComment(pToken.String);
                 GetToken();
                 break;
 
                 case TTokenCode.TcString:
-                PutComment(pToken.String());
+                PutComment(pToken.String);
                 GetToken();
                 break;
 
@@ -475,12 +475,12 @@ partial class TCodeGenerator
                 doneFlag = true;
                 break;
             }
-        } while (doneFlag == 0);
+        } while (!doneFlag);
     }
 
     public void EmitIdComment ()
     {
-        PutComment(pToken.String());
+        PutComment(pToken.String);
         GetToken();
 
         //--Loop to print any modifiers (subscripts, record fields,
@@ -501,7 +501,7 @@ partial class TCodeGenerator
             {
 
                 //--( or [
-                PutComment(token == ((int)TTokenCode.TcLParen) != 0 ? "(" : "[");
+                PutComment(token == TTokenCode.TcLParen ? "(" : "[");
                 GetToken();
 
                 while (TokenIn(token, tlIdModEnd) == 0)
@@ -524,7 +524,7 @@ partial class TCodeGenerator
                 }
 
                 //--) or ]
-                PutComment(token == ((int)TTokenCode.TcRParen) != 0 ? ")" : "]");
+                PutComment(token == TTokenCode.TcRParen ? ")" : "]");
                 GetToken();
             }
         }

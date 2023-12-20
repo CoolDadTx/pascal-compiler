@@ -23,7 +23,7 @@ public class TNumberToken : TToken
     private char ch; // char fetched from input buffer
     private string ps; // ptr into token string
     private int digitCount; // total no. of digits in number
-    private int countErrorFlag; // true if too many digits, else false
+    private bool countErrorFlag; // true if too many digits, else false
 
     //--------------------------------------------------------------
     //  AccumulateValue     Extract a number part from the source
@@ -36,14 +36,14 @@ public class TNumberToken : TToken
     //  Return: true  if success
     //          false if failure
     //--------------------------------------------------------------
-    public int AccumulateValue ( TTextInBuffer buffer, ref float value, TErrorCode ec )
+    public bool AccumulateValue ( TTextInBuffer buffer, ref float value, TErrorCode ec )
     {
         const int maxDigitCount = 20;
 
         //--Error if the first character is not a digit.
-        if (charCodeMap[ch] != TCharCode.CcDigit)
+        if (Globals.charCodeMap[ch] != TCharCode.CcDigit)
         {
-            Error(ec);
+            Globals.Error(ec);
             return false; // failure
         }
 
@@ -59,7 +59,7 @@ public class TNumberToken : TToken
                 countErrorFlag = true; // too many digits
 
             ch = buffer.GetChar();
-        } while (charCodeMap[ch] == TCharCode.CcDigit);
+        } while (Globals.charCodeMap[ch] == TCharCode.CcDigit);
 
         return true; // success
     }
@@ -87,11 +87,11 @@ public class TNumberToken : TToken
         char exponentSign = '+';
         float eValue = 0.0F; // value of number after 'E'
         int exponent = 0; // final value of exponent
-        int sawDotDotFlag = false; // true if encountered '..',
+        var sawDotDotFlag = false; // true if encountered '..',
                                    //   else false
 
         ch = buffer.Char();
-        ps = string;
+        ps = this.String;
         digitCount = 0;
         countErrorFlag = false;
         code = TTokenCode.TcError; // we don't know what it is yet, but
@@ -100,7 +100,7 @@ public class TNumberToken : TToken
         //--Get the whole part of the number by accumulating
         //--the values of its digits into numValue.  wholePlaces keeps
         //--track of the number of digits in this part.
-        if (!AccumulateValue(buffer, numValue, TErrorCode.ErrInvalidNumber))
+        if (!AccumulateValue(buffer, ref numValue, TErrorCode.ErrInvalidNumber))
             return;
         wholePlaces = digitCount;
 
@@ -124,7 +124,7 @@ public class TNumberToken : TToken
                 *ps++= '.';
 
                 //--We have a fraction part.  Accumulate it into numValue.
-                if (!AccumulateValue(buffer, numValue, TErrorCode.ErrInvalidFraction))
+                if (!AccumulateValue(buffer, ref numValue, TErrorCode.ErrInvalidFraction))
                     return;
                 decimalPlaces = digitCount - wholePlaces;
             }
@@ -132,7 +132,7 @@ public class TNumberToken : TToken
 
         //--Get the exponent part, if any. There cannot be an
         //--exponent part if we already saw the '..' token.
-        if (sawDotDotFlag == 0 && ((ch == 'E') || (ch == 'e')))
+        if (!sawDotDotFlag && ((ch == 'E') || (ch == 'e')))
         {
             type = TDataType.TyReal;
             *ps++= ch;
@@ -147,7 +147,7 @@ public class TNumberToken : TToken
 
             //--Accumulate the value of the number after 'E' into eValue.
             digitCount = 0;
-            if (!AccumulateValue(buffer, eValue, TErrorCode.ErrInvalidExponent))
+            if (!AccumulateValue(buffer, ref eValue, TErrorCode.ErrInvalidExponent))
                 return;
             if (exponentSign == '-')
                 eValue = -eValue;
@@ -156,7 +156,7 @@ public class TNumberToken : TToken
         //--Were there too many digits?
         if (countErrorFlag)
         {
-            Error(TErrorCode.ErrTooManyDigits);
+            Globals.Error(TErrorCode.ErrTooManyDigits);
             return;
         }
 
@@ -165,7 +165,7 @@ public class TNumberToken : TToken
         exponent = (int)eValue - decimalPlaces;
         if ((exponent + wholePlaces < -maxExponent) || (exponent + wholePlaces > maxExponent))
         {
-            Error(TErrorCode.ErrRealOutOfRange);
+            Globals.Error(TErrorCode.ErrRealOutOfRange);
             return;
         }
         if (exponent != 0)
@@ -176,7 +176,7 @@ public class TNumberToken : TToken
         {
             if ((numValue < -maxInteger) || (numValue > maxInteger))
             {
-                Error(TErrorCode.ErrIntegerOutOfRange);
+                Globals.Error(TErrorCode.ErrIntegerOutOfRange);
                 return;
             }
             value.integer = (int)numValue;
@@ -199,10 +199,10 @@ public class TNumberToken : TToken
     public override void Print ()
     {
         if (type == TDataType.TyInteger)
-            list.text = String.Format("\t{0,-18} ={1:D}", ">> integer:", value.integer);
+            Globals.list.text = String.Format("\t{0,-18} ={1:D}", ">> integer:", value.integer);
         else
-            list.text = String.Format("\t{0,-18} ={1:g}", ">> real:", value.real);
+            Globals.list.text = String.Format("\t{0,-18} ={1:g}", ">> real:", value.real);
 
-        list.PutLine();
+        Globals.list.PutLine();
     }
 }

@@ -64,7 +64,7 @@ public partial class TParser : IDisposable
 	if ( tc == token )
 		GetToken();
 	else
-		Error( ec ); // error if no match
+		Globals.Error( ec ); // error if no match
 	}
 
 	private void CondGetTokenAppend( TTokenCode tc, TErrorCode ec )
@@ -73,7 +73,7 @@ public partial class TParser : IDisposable
 	if ( tc == token )
 		GetTokenAppend();
 	else
-		Error( ec ); // error if no match
+		Globals.Error( ec ); // error if no match
 	}
 
 	private void InsertLineMarker()
@@ -124,8 +124,7 @@ public partial class TParser : IDisposable
 	private void CopyQuotedString( ref string pString, string pQuotedString )
 	{
 	int length = pQuotedString.Length - 2; // don't count quotes
-	pString = Convert.ToString( pQuotedString[1] ).Substring( 0, length );
-	pString[length] = '\0';
+	pString = Convert.ToString( pQuotedString[1] ).Substring( 0, length );	
 	}
 
 	//endfig
@@ -137,7 +136,7 @@ public partial class TParser : IDisposable
 	//                  up to one that is in a list or end of file.
 	//--------------------------------------------------------------
 
-	private void Resync( TTokenCode pList1, TTokenCode pList2 = null, TTokenCode pList3 = null )
+	private void Resync( TTokenCode pList1, TTokenCode pList2 = default, TTokenCode pList3 = default )
 	{
 		//--Is the current token in one of the lists?
 		int errorFlag = ( !TokenIn( token, pList1 ) ) && ( !TokenIn( token, pList2 ) ) && ( !TokenIn( token, pList3 ) );
@@ -146,8 +145,8 @@ public partial class TParser : IDisposable
 		{
 
 		//--Nope.  Flag it as an error.
-		TErrorCode errorCode = token == ( ( int )TTokenCode.TcEndOfFile ) != 0 ? TErrorCode.ErrUnexpectedEndOfFile : TErrorCode.ErrUnexpectedToken;
-		Error( errorCode );
+		var errorCode = token == ( ( int )TTokenCode.TcEndOfFile ) != 0 ? TErrorCode.ErrUnexpectedEndOfFile : TErrorCode.ErrUnexpectedToken;
+		Globals.Error( errorCode );
 
 		//--Skip tokens.
 		while ( ( !TokenIn( token, pList1 ) ) && ( !TokenIn( token, pList2 ) ) && ( !TokenIn( token, pList3 ) ) && ( token != TTokenCode.TcPeriod ) && ( token != TTokenCode.TcEndOfFile ) )
@@ -155,7 +154,7 @@ public partial class TParser : IDisposable
 
 		//--Flag an unexpected end of file (if haven't already).
 		if ( ( token == TTokenCode.TcEndOfFile ) && ( errorCode != TErrorCode.ErrUnexpectedEndOfFile ) )
-			Error( TErrorCode.ErrUnexpectedEndOfFile );
+			Globals.Error( TErrorCode.ErrUnexpectedEndOfFile );
 		}
 	}
 
@@ -172,8 +171,8 @@ public partial class TParser : IDisposable
 
 	public TToken GetCommandToken()
 	{
-	GetToken();
-	return pToken;
+	    GetToken();
+	    return pToken;
 	}
 
 
@@ -201,7 +200,7 @@ public partial class TParser : IDisposable
 		TSymtab pSymtab = symtabStack.GetCurrentSymtab();
 		if ( pSymtab.NodeVector() != null )
 			pSymtab.NodeVector().Dispose();
-		pSymtab.Convert( vpSymtabs );
+		pSymtab.Convert(Globals.vpSymtabs );
 	}
 
 	//--------------------------------------------------------------
@@ -224,7 +223,7 @@ public partial class TParser : IDisposable
 
 		if ( token == TTokenCode.TcIdentifier )
 		{
-		pTargetId = Find( pToken.String() );
+		pTargetId = Find( pToken.String );
 		icode.Put( pTargetId );
 
 		//--Parse the assignment.
@@ -237,10 +236,10 @@ public partial class TParser : IDisposable
 		TSymtab pSymtab = symtabStack.GetCurrentSymtab();
 		if ( pSymtab.NodeVector() != null )
 			pSymtab.NodeVector().Dispose();
-		pSymtab.Convert( vpSymtabs );
+		pSymtab.Convert( Globals.vpSymtabs );
 		} else
 		{
-			Error( TErrorCode.ErrUnexpectedToken );
+			Globals.Error( TErrorCode.ErrUnexpectedToken );
 		}
 
 		return pTargetId;
@@ -248,12 +247,12 @@ public partial class TParser : IDisposable
 
 	public void DebugSetCurrentSymtab( TSymtab pSymtab )
 	{
-	symtabStack.SetCurrentSymtab( pSymtab );
+	    symtabStack.SetCurrentSymtab( pSymtab );
 	}
 
 	public TSymtabNode DebugSearchAll( string pString )
 	{
-	return SearchAll( pString );
+	    return SearchAll( pString );
 	}
 
 
@@ -270,11 +269,11 @@ public partial class TParser : IDisposable
 		TSymtabNode pProgramId = ParseProgram();
 
 		//--Print the parser's summary.
-		list.PutLine();
-		list.text = String.Format( "{0,20:D} source lines.", currentLineNumber );
-		list.PutLine();
-		list.text = String.Format( "{0,20:D} syntax errors.", errorCount );
-		list.PutLine();
+		Globals.list.PutLine();
+		Globals.list.text = String.Format( "{0,20:D} source lines.", Globals.currentLineNumber );
+		Globals.list.PutLine();
+		Globals.list.text = String.Format( "{0,20:D} syntax errors.", Globals.errorCount );
+		Globals.list.PutLine();
 
 		return pProgramId;
 	}

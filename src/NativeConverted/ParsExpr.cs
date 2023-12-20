@@ -39,7 +39,7 @@ partial class TParser
 
             //--Check the operand types and return the boolean type.
             CheckRelOpOperands(pResultType, pOperandType);
-            pResultType = pBooleanType;
+            pResultType = Globals.pBooleanType;
         }
 
         //--Make sure the expression ended properly.
@@ -60,7 +60,7 @@ partial class TParser
         TType pResultType; // ptr to result type
         TType pOperandType; // ptr to operand type
         TTokenCode op; // operator
-        int unaryOpFlag = false; // true if unary op, else false
+        var unaryOpFlag = false; // true if unary op, else false
 
         //--Unary + or -
         if (TokenIn(token, tlUnaryOps) != 0)
@@ -94,23 +94,23 @@ partial class TParser
 
                 //--integer <op> integer => integer
                 if (IntegerOperands(pResultType, pOperandType))
-                    pResultType = pIntegerType;
+                    pResultType = Globals.pIntegerType;
 
                 //--real    <op> real    => real
                 //--real    <op> integer => real
                 //--integer <op> real    => real
                 else if (RealOperands(pResultType, pOperandType))
-                    pResultType = pRealType;
+                    pResultType = Globals.pRealType;
 
                 else
-                    Error(TErrorCode.ErrIncompatibleTypes);
+                    Globals.Error(TErrorCode.ErrIncompatibleTypes);
                 break;
 
                 case TTokenCode.TcOR:
 
                 //--boolean OR boolean => boolean
                 CheckBoolean(pResultType, pOperandType);
-                pResultType = pBooleanType;
+                pResultType = Globals.pBooleanType;
                 break;
             }
 
@@ -151,16 +151,16 @@ partial class TParser
 
                 //--integer * integer => integer
                 if (IntegerOperands(pResultType, pOperandType))
-                    pResultType = pIntegerType;
+                    pResultType = Globals.pIntegerType;
 
                 //--real    * real    => real
                 //--real    * integer => real
                 //--integer * real    => real
                 else if (RealOperands(pResultType, pOperandType))
-                    pResultType = pRealType;
+                    pResultType = Globals.pRealType;
 
                 else
-                    Error(TErrorCode.ErrIncompatibleTypes);
+                    Globals.Error(TErrorCode.ErrIncompatibleTypes);
                 break;
 
                 case TTokenCode.TcSlash:
@@ -170,9 +170,9 @@ partial class TParser
                 //--real    / integer => real
                 //--integer / real    => real
                 if (IntegerOperands(pResultType, pOperandType) || RealOperands(pResultType, pOperandType))
-                    pResultType = pRealType;
+                    pResultType = Globals.pRealType;
                 else
-                    Error(TErrorCode.ErrIncompatibleTypes);
+                    Globals.Error(TErrorCode.ErrIncompatibleTypes);
                 break;
 
                 case TTokenCode.TcDIV:
@@ -180,16 +180,16 @@ partial class TParser
 
                 //--integer <op> integer => integer
                 if (IntegerOperands(pResultType, pOperandType))
-                    pResultType = pIntegerType;
+                    pResultType = Globals.pIntegerType;
                 else
-                    Error(TErrorCode.ErrIncompatibleTypes);
+                    Globals.Error(TErrorCode.ErrIncompatibleTypes);
                 break;
 
                 case TTokenCode.TcAND:
 
                 //--boolean AND boolean => boolean
                 CheckBoolean(pResultType, pOperandType);
-                pResultType = pBooleanType;
+                pResultType = Globals.pBooleanType;
                 break;
             }
         }
@@ -218,7 +218,7 @@ partial class TParser
                 //--Search for the identifier and enter it if
                 //--necessary.  Append the symbol table node handle
                 //--to the icode.
-                TSymtabNode pNode = Find(pToken.String());
+                TSymtabNode pNode = Find(pToken.String);
                 icode.Put(pNode);
 
                 if (pNode.defn.how == TDefnCode.DcUndefined)
@@ -237,7 +237,7 @@ partial class TParser
                     break;
 
                     case TDefnCode.DcProcedure:
-                    Error(TErrorCode.ErrInvalidIdentifierUsage);
+                    Globals.Error(TErrorCode.ErrInvalidIdentifierUsage);
                     pResultType = ParseSubroutineCall(pNode, false);
                     break;
 
@@ -253,26 +253,25 @@ partial class TParser
 
                 break;
             }
-            //endfig
-
+            
             case TTokenCode.TcNumber:
             {
 
                 //--Search for the number and enter it if necessary.
-                TSymtabNode pNode = SearchAll(pToken.String());
+                TSymtabNode pNode = SearchAll(pToken.String);
                 if (pNode == null)
                 {
-                    pNode = EnterLocal(pToken.String());
+                    pNode = EnterLocal(pToken.String);
 
                     //--Determine the number's type, and set its value into
                     //--the symbol table node.
                     if (pToken.Type() == TDataType.TyInteger)
                     {
-                        pResultType = pIntegerType;
+                        pResultType = Globals.pIntegerType;
                         pNode.defn.constant.value.integer = pToken.Value().integer;
                     } else
                     {
-                        pResultType = pRealType;
+                        pResultType = Globals.pRealType;
                         pNode.defn.constant.value.real = pToken.Value().real;
                     }
                     SetType(pNode.pType, pResultType);
@@ -290,18 +289,18 @@ partial class TParser
             {
 
                 //--Search for the string and enter it if necessary.
-                char[] pString = pToken.String();
+                char[] pString = pToken.String;
                 TSymtabNode pNode = SearchAll(pString);
                 if (pNode == null)
                 {
                     pNode = EnterLocal(pString);
-                    pString = pNode.String();
+                    pString = pNode.String;
 
                     //--Compute the string length (without the quotes).
                     //--If the length is 1, the result type is character,
                     //--else create a new string type.
                     int length = pString.Length - 2;
-                    pResultType = length == 1 ? pCharType : new TType(length);
+                    pResultType = length == 1 ? Globals.pCharType : new TType(length);
                     SetType(pNode.pType, pResultType);
 
                     //--Set the character value or string pointer into the
@@ -321,33 +320,33 @@ partial class TParser
             }
 
             case TTokenCode.TcNOT:
+            {
+                //--The operand type must be boolean.
+                GetTokenAppend();
+                CheckBoolean(ParseFactor());
+                pResultType = Globals.pBooleanType;
 
-            //--The operand type must be boolean.
-            GetTokenAppend();
-            CheckBoolean(ParseFactor());
-            pResultType = pBooleanType;
-
-            break;
+                break;
+            }
 
             case TTokenCode.TcLParen:
-
-            //--Parenthesized subexpression:  Call ParseExpression
-            //--                              recursively ...
-            GetTokenAppend();
-            pResultType = ParseExpression();
-
-            //-- ... and check for the closing right parenthesis.
-            if (token == TTokenCode.TcRParen)
+            {
+                //--Parenthesized subexpression:  Call ParseExpression
+                //--                              recursively ...
                 GetTokenAppend();
-            else
-                Error(TErrorCode.ErrMissingRightParen);
+                pResultType = ParseExpression();
 
-            break;
+                //-- ... and check for the closing right parenthesis.
+                if (token == TTokenCode.TcRParen)
+                    GetTokenAppend();
+                else
+                    Globals.Error(TErrorCode.ErrMissingRightParen);
+                break;
+            };
 
             default:
-
-            Error(TErrorCode.ErrInvalidExpression);
-            pResultType = pDummyType;
+                Globals.Error(TErrorCode.ErrInvalidExpression);
+                pResultType = Globals.pDummyType;
 
             break;
         }
@@ -381,33 +380,33 @@ partial class TParser
 
             //C++ TO C# CONVERTER TODO TASK: C# does not allow fall-through from a non-empty 'case':
             default:
-            pResultType = pDummyType;
-            Error(TErrorCode.ErrInvalidIdentifierUsage);
+            pResultType = Globals.pDummyType;
+            Globals.Error(TErrorCode.ErrInvalidIdentifierUsage);
             break;
         }
 
         GetTokenAppend();
 
         //-- [ or . : Loop to parse any subscripts and fields.
-        int doneFlag = false;
+        var doneFlag = false;
         do
         {
             switch (token)
             {
 
                 case TTokenCode.TcLBracket:
-                pResultType = ParseSubscripts(pResultType);
-                break;
+                    pResultType = ParseSubscripts(pResultType);
+                    break;
 
                 case TTokenCode.TcPeriod:
-                pResultType = ParseField(pResultType);
-                break;
+                    pResultType = ParseField(pResultType);
+                    break;
 
                 default:
-                doneFlag = true;
-                break;
+                    doneFlag = true;
+                    break;
             }
-        } while (doneFlag == 0);
+        } while (!doneFlag);
 
         return pResultType;
     }
@@ -447,7 +446,7 @@ partial class TParser
             //--Parse the extra subscripts anyway for error recovery.
             else
             {
-                Error(TErrorCode.ErrTooManySubscripts);
+                Globals.Error(TErrorCode.ErrTooManySubscripts);
                 ParseExpression();
             }
 
@@ -456,7 +455,7 @@ partial class TParser
         //-- ]
         CondGetTokenAppend(TTokenCode.TcRBracket, TErrorCode.ErrMissingRightBracket);
 
-        return (TType)pType;
+        return pType;
     }
 
     //--------------------------------------------------------------
@@ -477,16 +476,16 @@ partial class TParser
         {
             TSymtabNode pFieldId = pType.record.pSymtab.Search(pToken.String());
             if (pFieldId == null)
-                Error(TErrorCode.ErrInvalidField);
+                Globals.Error(TErrorCode.ErrInvalidField);
             icode.Put(pFieldId);
 
             GetTokenAppend();
-            return pFieldId != null ? pFieldId.pType : pDummyType;
+            return pFieldId != null ? pFieldId.pType : Globals.pDummyType;
         } else
         {
-            Error(TErrorCode.ErrInvalidField);
+            Globals.Error(TErrorCode.ErrInvalidField);
             GetTokenAppend();
-            return pDummyType;
+            return Globals.pDummyType;
         }
     }
 }

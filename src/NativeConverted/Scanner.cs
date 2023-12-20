@@ -69,11 +69,11 @@ public class TTextScanner : TScanner
 			//--Skip over a comment, then fetch the next character.
 			do
 			ch = pTextInBuffer.GetChar();
-			while ( ( ch != '}' ) && ( ch != eofChar ) );
-			if ( ch != eofChar )
+			while ( ( ch != '}' ) && ( ch != Globals.eofChar ) );
+			if ( ch != Globals.eofChar )
 				ch = pTextInBuffer.GetChar();
 			else
-				Error( TErrorCode.ErrUnexpectedEndOfFile );
+				Globals.Error( TErrorCode.ErrUnexpectedEndOfFile );
 		}
 		} while ( ( Globals.charCodeMap[ch] == TCharCode.CcWhiteSpace ) || ( ch == '{' ) );
 	}
@@ -113,7 +113,7 @@ public class TTextScanner : TScanner
 		Globals.charCodeMap[' '] = Globals.charCodeMap['\t'] = TCharCode.CcWhiteSpace;
 		Globals.charCodeMap['\n'] = Globals.charCodeMap['\0'] = TCharCode.CcWhiteSpace;
 		Globals.charCodeMap['\''] = TCharCode.CcQuote;
-		Globals.charCodeMap[eofChar] = TCharCode.CcEndOfFile;
+		Globals.charCodeMap[Globals.eofChar] = TCharCode.CcEndOfFile;
 	}
 	public override void Dispose()
 	{

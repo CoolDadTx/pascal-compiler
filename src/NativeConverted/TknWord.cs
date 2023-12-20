@@ -21,22 +21,22 @@ public class TWordToken : TToken
     //--------------------------------------------------------------
     public void CheckForReservedWord ()
     {
-        int len = str.Length;
+        int len = this.String.Length;
         //C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-        TResWord* prw = new TResWord(); // ptr to elmt of reserved word table
+        TResWord prw = new TResWord(); // ptr to elmt of reserved word table
 
         code = TTokenCode.TcIdentifier; // first assume it's an identifier
 
         //--Is it the right length?
-        if ((len >= minResWordLen) && (len <= maxResWordLen))
+        if ((len >= Globals.minResWordLen) && (len <= Globals.maxResWordLen))
         {
 
             //--Yes.  Use the word length to pick the appropriate list
             //--from the reserved word table and check to see if the word
             //--is in there.
-            for (prw = rwTable[len]; prw.pString != null; ++prw)
+            for (prw = Globals.rwTable[len]; prw.pString != null; ++prw)
             {
-                if (string.Compare(string, prw.pString) == 0)
+                if (String.Compare(this.String, prw.pString) == 0)
                 {
                     code = prw.code; // yes: set reserved word token code
                     break;
@@ -55,14 +55,14 @@ public class TWordToken : TToken
     {
         char ch = buffer.Char(); // char fetched from input
                                  //C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-        var ps = str;
+        var ps = this.String;
 
         //--Get the word.
         do
         {
             *ps++= ch;
             ch = buffer.GetChar();
-        } while ((charCodeMap[ch] == TCharCode.CcLetter) || (charCodeMap[ch] == TCharCode.CcDigit));
+        } while ((Globals.charCodeMap[ch] == TCharCode.CcLetter) || (Globals.charCodeMap[ch] == TCharCode.CcDigit));
 
         *ps = '\0';
         string.ToLower(); // downshift its characters
@@ -80,10 +80,10 @@ public class TWordToken : TToken
     public override void Print ()
     {
         if (code == TTokenCode.TcIdentifier)
-            list.text = String.Format("\t{0,-18} {1}", ">> identifier:", string);
+            Globals.list.text = String.Format("\t{0,-18} {1}", ">> identifier:", string);
         else
-            list.text = String.Format("\t{0,-18} {1}", ">> reserved word:", string);
+            Globals.list.text = String.Format("\t{0,-18} {1}", ">> reserved word:", string);
 
-        list.PutLine();
+        Globals.list.PutLine();
     }
 }

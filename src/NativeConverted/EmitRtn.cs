@@ -34,11 +34,11 @@ partial class TCodeGenerator
         PutLine();
 
         //--Equates for stack frame components.
-        AsmText() = String.Format("{0}\t\tEQU\t<WORD PTR [bp+4]>", DefineConstants.StaticLink);
+        AsmText = String.Format("{0}\t\tEQU\t<WORD PTR [bp+4]>", StaticLink);
         PutLine();
-        AsmText() = String.Format("{0}\t\tEQU\t<WORD PTR [bp-4]>", DefineConstants.ReturnValue);
+        AsmText = String.Format("{0}\t\tEQU\t<WORD PTR [bp-4]>", ReturnValue);
         PutLine();
-        AsmText() = String.Format("{0}\tEQU\t<WORD PTR [bp-2]>", DefineConstants.HighReturnValue);
+        AsmText = String.Format("{0}\tEQU\t<WORD PTR [bp-2]>", HighReturnValue);
         PutLine();
     }
 
@@ -57,18 +57,18 @@ partial class TCodeGenerator
         //--Emit declarations for the program's global variables.
         for (pId = pProgramId.defn.routine.locals.pVariableIds; pId != null; pId = pId.next)
         {
-            AsmText() = String.Format("{0}_{1:D3}\t", pId.String(), pId.labelIndex);
+            AsmText = String.Format("{0}_{1:D3}\t", pId.String(), pId.labelIndex);
             Advance();
 
             pType = pId.pType;
-            if (pType == pCharType)
-                AsmText() = "DB\t0";
-            else if (pType == pRealType)
-                AsmText() = "DD\t0.0";
-            else if (pType.IsScalar() == 0)
-                AsmText() = String.Format("DB\t{0:D} DUP(0)", pType.size);
+            if (pType == Globals.pCharType)
+                AsmText = "DB\t0";
+            else if (pType == Globals.pRealType)
+                AsmText = "DD\t0.0";
+            else if (!pType.IsScalar())
+                AsmText = String.Format("DB\t{0:D} DUP(0)", pType.size);
             else
-                AsmText() = "DW\t0";
+                AsmText = "DW\t0";
 
             PutLine();
         }
@@ -76,7 +76,7 @@ partial class TCodeGenerator
         //--Emit declarations for the program's floating point literals.
         for (pId = pFloatLitList; pId != null; pId = pId.next)
         {
-            AsmText() = String.Format("{0}_{1:D3}\tDD\t{2:e}", DefineConstants.FloatLabelPrefix, pId.labelIndex, pId.defn.constant.value.real);
+            AsmText = String.Format("{0}_{1:D3}\tDD\t{2:e}", FloatLabelPrefix, pId.labelIndex, pId.defn.constant.value.real);
             PutLine();
         }
 
@@ -84,10 +84,10 @@ partial class TCodeGenerator
         for (pId = pStringLitList; pId != null; pId = pId.next)
         {
             int i;
-            char[] pString = pId.String();
+            var pString = pId.String();
             int length = pString.Length - 2; // don't count quotes
 
-            AsmText() = String.Format("{0}_{1:D3}\tDB\t\"", DefineConstants.StringLabelPrefix, pId.labelIndex);
+            AsmText = String.Format("{0}_{1:D3}\tDB\t\"", StringLabelPrefix, pId.labelIndex);
             Advance();
 
             for (i = 1; i <= length; ++i)
@@ -97,7 +97,7 @@ partial class TCodeGenerator
         }
 
         PutLine();
-        AsmText() = "\tEND";
+        AsmText = "\tEND";
         PutLine();
     }
 
@@ -118,7 +118,7 @@ partial class TCodeGenerator
         //--Switch to main's intermediate code and emit code
         //--for its compound statement.
         pIcode = pMainId.defn.routine.pIcode;
-        currentNestingLevel = 1;
+        Globals.currentNestingLevel = 1;
         EmitMainPrologue();
         EmitCompound();
         EmitMainEpilogue();
@@ -190,7 +190,7 @@ partial class TCodeGenerator
         //--Switch to the routine's intermediate code and emit code
         //--for its compound statement.
         pIcode = pRoutineId.defn.routine.pIcode;
-        currentNestingLevel = pRoutineId.level + 1; // level of locals
+        Globals.currentNestingLevel = pRoutineId.level + 1; // level of locals
         EmitRoutinePrologue(pRoutineId);
         EmitCompound();
         EmitRoutineEpilogue(pRoutineId);
@@ -203,7 +203,7 @@ partial class TCodeGenerator
     public void EmitRoutinePrologue ( TSymtabNode pRoutineId )
     {
         PutLine();
-        AsmText() = String.Format("{0}_{1:D3}\tPROC", pRoutineId.String(), pRoutineId.labelIndex);
+        AsmText = String.Format("{0}_{1:D3}\tPROC", pRoutineId.String(), pRoutineId.labelIndex);
         PutLine();
         PutLine();
 
@@ -265,17 +265,17 @@ partial class TCodeGenerator
                 pAsmBuffer.Put('\t');
                 Reg(TRegister.Ax);
                 pAsmBuffer.Put(',');
-                NameLit(DefineConstants.ReturnValue);
+                NameLit(ReturnValue);
                 pAsmBuffer.PutLine();
             };
-            if (pRoutineId.pType == pRealType)
+            if (pRoutineId.pType == Globals.pRealType)
             {
                 {
                     Operator(TInstruction.Mov);
                     pAsmBuffer.Put('\t');
                     Reg(TRegister.Dx);
                     pAsmBuffer.Put(',');
-                    NameLit(DefineConstants.HighReturnValue);
+                    NameLit(HighReturnValue);
                     pAsmBuffer.PutLine();
                 };
             }
@@ -305,7 +305,7 @@ partial class TCodeGenerator
         // return and cut back stack
 
         PutLine();
-        AsmText() = String.Format("{0}_{1:D3}\tENDP", pRoutineId.String(), pRoutineId.labelIndex);
+        AsmText = String.Format("{0}_{1:D3}\tENDP", pRoutineId.String(), pRoutineId.labelIndex);
         PutLine();
     }
 
@@ -332,7 +332,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public TType EmitDeclaredSubroutineCall ( TSymtabNode pRoutineId )
     {
-        int oldLevel = currentNestingLevel; // level of caller
+        int oldLevel = Globals.currentNestingLevel; // level of caller
         int newLevel = pRoutineId.level + 1; // level of callee's locals
 
         //--Emit code to push the actual parameter values onto the stack.
@@ -363,7 +363,7 @@ partial class TCodeGenerator
             {
                 Operator(TInstruction.Push);
                 pAsmBuffer.Put('\t');
-                NameLit(DefineConstants.StaticLink);
+                NameLit(StaticLink);
                 pAsmBuffer.PutLine();
             };
         } else
@@ -421,11 +421,11 @@ partial class TCodeGenerator
             {
                 TType pActualType = EmitExpression();
 
-                if (pFormalType == pRealType)
+                if (pFormalType == Globals.pRealType)
                 {
 
                     //--Real formal parm
-                    if (pActualType == pIntegerType)
+                    if (pActualType == Globals.pIntegerType)
                     {
                         {
                             Operator(TInstruction.Push);
@@ -436,7 +436,7 @@ partial class TCodeGenerator
                         {
                             Operator(TInstruction.Call);
                             pAsmBuffer.Put('\t');
-                            NameLit(DefineConstants.FloatConvert);
+                            NameLit(FloatConvert);
                             pAsmBuffer.PutLine();
                         };
                         {
@@ -460,7 +460,7 @@ partial class TCodeGenerator
                         Reg(TRegister.Ax);
                         pAsmBuffer.PutLine();
                     };
-                } else if (pActualType.IsScalar() == 0)
+                } else if (!pActualType.IsScalar())
                 {
 
                     //--Block move onto the stack.  Round the next offset

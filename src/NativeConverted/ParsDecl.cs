@@ -74,7 +74,7 @@ partial class TParser
         {
 
             //--<id>
-            TSymtabNode pConstId = EnterNewLocal(pToken.String());
+            TSymtabNode pConstId = EnterNewLocal(pToken.String);
 
             //--Link the routine's local constant id nodes together.
             if (!pRoutineId.defn.routine.locals.pConstantIds)
@@ -146,16 +146,16 @@ partial class TParser
             //--String constant:  Character or string
             //--                  (character array) type.
             case TTokenCode.TcString:
-            int length = Convert.ToString(pToken.String()).Length - 2; // skip quotes
+            int length = Convert.ToString(pToken.String).Length - 2; // skip quotes
 
             if (sign != TTokenCode.TcDummy)
-                Error(TErrorCode.ErrInvalidConstant);
+                Globals.Error(TErrorCode.ErrInvalidConstant);
 
             //--Single character
             if (length == 1)
             {
-                pConstId.defn.constant.value.character = pToken.String()[1];
-                SetType(pConstId.pType, pCharType);
+                pConstId.defn.constant.value.character = pToken.String[1];
+                SetType(pConstId.pType, Globals.pCharType);
             }
 
             //--String (character array):  Create a new unnamed
@@ -163,7 +163,7 @@ partial class TParser
             else
             {
                 string pString = new string(new char[length - 1]);
-                CopyQuotedString(pString, pToken.String());
+                CopyQuotedString(pString, pToken.String);
                 pConstId.defn.constant.value.pString = pString;
                 SetType(pConstId.pType, new TType(length));
             }
@@ -189,45 +189,45 @@ partial class TParser
     //--------------------------------------------------------------
     public void ParseIdentifierConstant ( TSymtabNode pId1, TTokenCode sign )
     {
-        TSymtabNode pId2 = Find(pToken.String()); // ptr to <id-2>
+        TSymtabNode pId2 = Find(pToken.String); // ptr to <id-2>
 
         if (pId2.defn.how != TDefnCode.DcConstant)
         {
-            Error(TErrorCode.ErrNotAConstantIdentifier);
-            SetType(pId1.pType, pDummyType);
+            Globals.Error(TErrorCode.ErrNotAConstantIdentifier);
+            SetType(pId1.pType, Globals.pDummyType);
             GetToken();
             return;
         }
 
         //--Integer identifier
-        if (pId2.pType == pIntegerType)
+        if (pId2.pType == Globals.pIntegerType)
         {
-            pId1.defn.constant.value.integer = (int)sign == ((int)TTokenCode.TcMinus) != 0 ? -pId2.defn.constant.value.integer : pId2.defn.constant.value.integer;
-            SetType(pId1.pType, pIntegerType);
+            pId1.defn.constant.value.integer = sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.integer : pId2.defn.constant.value.integer;
+            SetType(pId1.pType, Globals.pIntegerType);
         }
 
         //--Real identifier
-        else if (pId2.pType == pRealType)
+        else if (pId2.pType == Globals.pRealType)
         {
-            pId1.defn.constant.value.real = (int)sign == ((int)TTokenCode.TcMinus) != 0 ? -pId2.defn.constant.value.real : pId2.defn.constant.value.real;
-            SetType(pId1.pType, pRealType);
+            pId1.defn.constant.value.real = sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.real : pId2.defn.constant.value.real;
+            SetType(pId1.pType, Globals.pRealType);
         }
 
         //--Character identifier:  No unary sign allowed.
-        else if (pId2.pType == pCharType)
+        else if (pId2.pType == Globals.pCharType)
         {
             if (sign != TTokenCode.TcDummy)
-                Error(TErrorCode.ErrInvalidConstant);
+                Globals.Error(TErrorCode.ErrInvalidConstant);
 
             pId1.defn.constant.value.character = pId2.defn.constant.value.character;
-            SetType(pId1.pType, pCharType);
+            SetType(pId1.pType, Globals.pCharType);
         }
 
         //--Enumeration identifier:  No unary sign allowed.
         else if (pId2.pType.form == TFormCode.FcEnum)
         {
             if (sign != TTokenCode.TcDummy)
-                Error(TErrorCode.ErrInvalidConstant);
+                Globals.Error(TErrorCode.ErrInvalidConstant);
 
             pId1.defn.constant.value.integer = pId2.defn.constant.value.integer;
             SetType(pId1.pType, pId2.pType);
@@ -238,7 +238,7 @@ partial class TParser
         else if (pId2.pType.form == TFormCode.FcArray)
         {
             if ((sign != TTokenCode.TcDummy) || (pId2.pType.array.pElmtType != pCharType))
-                Error(TErrorCode.ErrInvalidConstant);
+                Globals.Error(TErrorCode.ErrInvalidConstant);
 
             pId1.defn.constant.value.pString = pId2.defn.constant.value.pString;
             SetType(pId1.pType, pId2.pType);
@@ -261,14 +261,12 @@ partial class TParser
     //--------------------------------------------------------------
     public void ParseVariableDeclarations ( TSymtabNode pRoutineId )
     {
-        if (execFlag != 0)
+        if (Globals.execFlag)
             ParseVarOrFieldDecls(pRoutineId, null, pRoutineId.defn.routine.parmCount);
         else
-            ParseVarOrFieldDecls(pRoutineId, null, pRoutineId.defn.how == ((int)TDefnCode.DcProcedure) != 0 ? procLocalsStackFrameOffset : funcLocalsStackFrameOffset);
+            ParseVarOrFieldDecls(pRoutineId, null, pRoutineId.defn.how == TDefnCode.DcProcedure ? Globals.procLocalsStackFrameOffset : Globals.funcLocalsStackFrameOffset);
     }
-    //fig 12-10
-    //endfig
-
+    
     //--------------------------------------------------------------
     //  ParseFieldDeclarations      Parse a list record field
     //                              declarations.
@@ -329,7 +327,7 @@ partial class TParser
                 {
 
                     //--Variables
-                    if (execFlag != 0)
+                    if (execFlag)
                         pId.defn.data.offset = offset++;
                     else
                     {
@@ -391,9 +389,7 @@ partial class TParser
         else
             pRecordType.size = offset;
     }
-    //fig 12-11
-    //endfig
-
+    
     //--------------------------------------------------------------
     //  ParseIdSublist      Parse a sublist of variable or record
     //                      identifiers separated by commas.
@@ -404,7 +400,7 @@ partial class TParser
     //      pLastId     : ref to ptr that will be set to point to the
     //                    last symbol table node of the sublist
     //--------------------------------------------------------------
-    public TSymtabNode* ParseIdSublist ( TSymtabNode pRoutineId, TType pRecordType, ref TSymtabNode pLastId )
+    public TSymtabNode ParseIdSublist ( TSymtabNode pRoutineId, TType pRecordType, ref TSymtabNode pLastId )
     {
         TSymtabNode pId;
         TSymtabNode pFirstId = null;
@@ -417,7 +413,7 @@ partial class TParser
 
             //--Variable:  Enter into local  symbol table.
             //--Field:     Enter into record symbol table.
-            pId = pRoutineId != null ? EnterNewLocal(pToken.String()) : pRecordType.record.pSymtab.EnterNew(pToken.String());
+            pId = pRoutineId != null ? EnterNewLocal(pToken.String) : pRecordType.record.pSymtab.EnterNew(pToken.String);
 
             //--Link newly-declared identifier nodes together
             //--into a sublist.
@@ -446,13 +442,13 @@ partial class TParser
                     GetToken();
                     Resync(tlIdentifierStart, tlIdentifierFollow);
                     if (token == TTokenCode.TcComma)
-                        Error(TErrorCode.ErrMissingIdentifier);
+                        Globals.Error(TErrorCode.ErrMissingIdentifier);
                 } while (token == TTokenCode.TcComma);
                 if (token != TTokenCode.TcIdentifier)
-                    Error(TErrorCode.ErrMissingIdentifier);
+                    Globals.Error(TErrorCode.ErrMissingIdentifier);
             } else if (token == TTokenCode.TcIdentifier)
             {
-                Error(TErrorCode.ErrMissingComma);
+                Globals.Error(TErrorCode.ErrMissingComma);
             }
         }
 

@@ -3,11 +3,7 @@
 //--------------------------------------------------------------
 public class TIcode : TScanner
 {
-//C++ TO C# CONVERTER NOTE: Enums must be named in C#, so the following enum has been named AnonymousEnum:
-	private enum AnonymousEnum
-	{
-		CodeSegmentSize = 4096
-	}
+    private const int CodeSegmentSize = 4096;
 
 	private string pCode; // ptr to the code segment
 	private string cursor; // ptr to current code location
@@ -22,10 +18,10 @@ public class TIcode : TScanner
 
 	private void CheckBounds( int size )
 	{
-		if ( cursor.Substring( size ) >= pCode[( int )AnonymousEnum.CodeSegmentSize] )
+		if ( cursor.Substring( size ) >= pCode[CodeSegmentSize] )
 		{
-		Error( TErrorCode.ErrCodeSegmentOverflow );
-		Globals.AbortTranslation( TAbortCode.AbortCodeSegmentOverflow );
+		    Globals.Error( TErrorCode.ErrCodeSegmentOverflow );
+		    Globals.AbortTranslation( TAbortCode.AbortCodeSegmentOverflow );
 		}
 	}
 	
@@ -47,7 +43,7 @@ public class TIcode : TScanner
 		memcpy( ( object ) & xNode, ( object )( cursor + sizeof( short ) ), sizeof( short ) );
 		cursor += 2 * sizeof( short );
 
-		return vpSymtabs[xSymtab].Get( xNode );
+		return Globals.vpSymtabs[xSymtab].Get( xNode );
 	}
 
 
@@ -70,7 +66,7 @@ public class TIcode : TScanner
 	}
 	public TIcode()
 	{
-		pCode = cursor = new string( new char[( int )AnonymousEnum2.CodeSegmentSize - 1] );
+		pCode = cursor = new string( new char[CodeSegmentSize - 1] );
 	}
    public new void Dispose()
    {
@@ -89,7 +85,7 @@ public class TIcode : TScanner
 
 	public void Put( TTokenCode tc )
 	{
-		if ( errorCount > 0 )
+		if (Globals.errorCount > 0)
 			return;
 
 		char code = tc;
@@ -109,7 +105,7 @@ public class TIcode : TScanner
 
 	public void Put( TSymtabNode pNode )
 	{
-		if ( errorCount > 0 )
+		if (Globals.errorCount > 0)
 			return;
 
 		short xSymtab = pNode.SymtabIndex();
@@ -131,7 +127,7 @@ public class TIcode : TScanner
 
 	public void InsertLineMarker()
 	{
-		if ( errorCount > 0 )
+		if (Globals.errorCount > 0)
 			return;
 
 		//--Remember the last appended token code;
@@ -143,7 +139,7 @@ public class TIcode : TScanner
 		//--Insert a statement marker code
 		//--followed by the current line number.
 		char code = Globals.mcLineMarker;
-		short number = currentLineNumber;
+		short number = Globals.currentLineNumber;
 		CheckBounds( sizeof( char ) + sizeof( short ) );
 //C++ TO C# CONVERTER TODO TASK: The memory management function 'memcpy' has no equivalent in C#:
 		memcpy( ( object ) cursor, ( object ) & code, sizeof( char ) );
@@ -169,7 +165,7 @@ public class TIcode : TScanner
 
 	public int PutLocationMarker()
 	{
-		if ( errorCount > 0 )
+		if (Globals.errorCount > 0)
 			return 0;
 
 		//--Append the location marker code.
@@ -203,7 +199,7 @@ public class TIcode : TScanner
 	public void FixupLocationMarker( int location )
 	{
 		//--Patch in the offset of the current token's location.
-		short offset = CurrentLocation() - 1;
+		var offset = CurrentLocation() - 1;
 //C++ TO C# CONVERTER TODO TASK: The memory management function 'memcpy' has no equivalent in C#:
 		memcpy( ( object )( pCode.Substring( location ) ), ( object ) & offset, sizeof( short ) );
 	}
@@ -237,10 +233,10 @@ public class TIcode : TScanner
 
 	public void PutCaseItem( int value, int location )
 	{
-		if ( errorCount > 0 )
+		if (Globals.errorCount > 0)
 			return;
 
-		short offset = location & 0xffff;
+		var offset = location & 0xffff;
 
 		CheckBounds( sizeof( int ) + sizeof( short ) );
 //C++ TO C# CONVERTER TODO TASK: The memory management function 'memcpy' has no equivalent in C#:
@@ -323,7 +319,7 @@ public class TIcode : TScanner
 
 //C++ TO C# CONVERTER TODO TASK: The memory management function 'memcpy' has no equivalent in C#:
 			memcpy( ( object ) & number, ( object ) cursor, sizeof( short ) );
-			currentLineNumber = number;
+			Globals.currentLineNumber = number;
 			cursor += sizeof( short );
 		}
 		} while ( token == Globals.mcLineMarker );
@@ -368,17 +364,17 @@ public class TIcode : TScanner
 		case TTokenCode.TcNumber:
 		case TTokenCode.TcString:
 			pNode = GetSymtabNode();
-			pToken.string = pNode.String();
+			pToken.String = pNode.String();
 			break;
 
 		case Globals.mcLocationMarker:
 			pNode = null;
-			pToken.string[0] = '\0';
+            pToken.String = "";
 			break;
 
 		default:
 			pNode = null;
-			pToken.string = Globals.symbolStrings[code];
+			pToken.String = Globals.symbolStrings[code];
 			break;
 		}
 

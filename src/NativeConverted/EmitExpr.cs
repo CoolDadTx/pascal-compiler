@@ -48,7 +48,8 @@ partial class TCodeGenerator
 
             //--Perform the operation, and push the resulting value
             //--onto the stack.
-            if (((pOperand1Type == pIntegerType) && (pOperand2Type == pIntegerType)) || ((pOperand1Type == pCharType) && (pOperand2Type == pCharType)) || (pOperand1Type.form == TFormCode.FcEnum))
+            if (((pOperand1Type == Globals.pIntegerType) && (pOperand2Type == Globals.pIntegerType)) 
+                || ((pOperand1Type == Globals.pCharType) && (pOperand2Type == Globals.pCharType)) || (pOperand1Type.form == TFormCode.FcEnum))
             {
 
                 //--integer <op> integer
@@ -70,7 +71,7 @@ partial class TCodeGenerator
                     Reg(TRegister.Ax);
                     pAsmBuffer.PutLine();
                 };
-            } else if ((pOperand1Type == pRealType) || (pOperand2Type == pRealType))
+            } else if ((pOperand1Type == Globals.pRealType) || (pOperand2Type == Globals.pRealType))
             {
 
                 //--real    <op> real
@@ -85,7 +86,7 @@ partial class TCodeGenerator
                 {
                     Operator(TInstruction.Call);
                     pAsmBuffer.Put('\t');
-                    NameLit(DefineConstants.FloatCompare);
+                    NameLit(FloatCompare);
                     pAsmBuffer.PutLine();
                 };
                 {
@@ -186,12 +187,12 @@ partial class TCodeGenerator
                 jumpOpcode = TInstruction.Jg;
                 break;
             }
-
-            jumpLabelIndex = ++asmLabelIndex;
+            
+            jumpLabelIndex = ++Globals.asmLabelIndex;
             {
                 Operator(jumpOpcode);
                 pAsmBuffer.Put('\t');
-                Label(DefineConstants.StmtLabelPrefix, jumpLabelIndex);
+                Label(StmtLabelPrefix, jumpLabelIndex);
                 pAsmBuffer.PutLine();
             };
 
@@ -205,7 +206,7 @@ partial class TCodeGenerator
             }; // load 0 if false
             EmitStatementLabel(jumpLabelIndex);
 
-            pResultType = pBooleanType;
+            pResultType = Globals.pBooleanType;
         }
 
         return pResultType;
@@ -241,19 +242,19 @@ partial class TCodeGenerator
         //--by calling _FloatNegate.
         if (unaryOp == TTokenCode.TcMinus)
         {
-            if (pResultType.Base() == pIntegerType)
+            if (pResultType.Base() == Globals.pIntegerType)
             {
                 Operator(TInstruction.Neg);
                 pAsmBuffer.Put('\t');
                 Reg(TRegister.Ax);
                 pAsmBuffer.PutLine();
-            } else if (pResultType == pRealType)
+            } else if (pResultType == Globals.pRealType)
             {
                 EmitPushOperand(pResultType);
                 {
                     Operator(TInstruction.Call);
                     pAsmBuffer.Put('\t');
-                    NameLit(DefineConstants.FloatNegate);
+                    NameLit(FloatNegate);
                     pAsmBuffer.PutLine();
                 };
                 {
@@ -298,8 +299,8 @@ partial class TCodeGenerator
                     Reg(TRegister.Dx);
                     pAsmBuffer.PutLine();
                 };
-                pResultType = pBooleanType;
-            } else if ((pResultType == pIntegerType) && (pOperandType == pIntegerType))
+                pResultType = Globals.pBooleanType;
+            } else if ((pResultType == Globals.pIntegerType) && (pOperandType == Globals.pIntegerType))
             {
 
                 {
@@ -336,7 +337,7 @@ partial class TCodeGenerator
                         pAsmBuffer.PutLine();
                     };
                 }
-                pResultType = pIntegerType;
+                pResultType = Globals.pIntegerType;
             } else
             {
 
@@ -351,7 +352,7 @@ partial class TCodeGenerator
                 {
                     Operator(TInstruction.Call);
                     pAsmBuffer.Put('\t');
-                    NameLit((int)op == ((int)TTokenCode.TcPlus) != 0 ? DefineConstants.FloatAdd : DefineConstants.FloatSubtract);
+                    NameLit(op == TTokenCode.TcPlus ? FloatAdd : FloatSubtract);
                     pAsmBuffer.PutLine();
                 };
                 {
@@ -362,7 +363,7 @@ partial class TCodeGenerator
                     IntegerLit(8);
                     pAsmBuffer.PutLine();
                 };
-                pResultType = pRealType;
+                pResultType = Globals.pRealType;
             }
         }
 
@@ -417,13 +418,13 @@ partial class TCodeGenerator
                         Reg(TRegister.Dx);
                         pAsmBuffer.PutLine();
                     };
-                    pResultType = pBooleanType;
+                    pResultType = Globals.pBooleanType;
                     break;
                 }
 
                 case TTokenCode.TcStar:
 
-                if ((pResultType == pIntegerType) && (pOperandType == pIntegerType))
+                if ((pResultType == Globals.pIntegerType) && (pOperandType == Globals.pIntegerType))
                 {
 
                     //--integer * integer => integer
@@ -440,7 +441,7 @@ partial class TCodeGenerator
                         Reg(TRegister.Dx);
                         pAsmBuffer.PutLine();
                     };
-                    pResultType = pIntegerType;
+                    pResultType = Globals.pIntegerType;
                 } else
                 {
 
@@ -456,7 +457,7 @@ partial class TCodeGenerator
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.FloatMultiply);
+                        NameLit(FloatMultiply);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -467,7 +468,7 @@ partial class TCodeGenerator
                         IntegerLit(8);
                         pAsmBuffer.PutLine();
                     };
-                    pResultType = pRealType;
+                    pResultType = Globals.pRealType;
                 }
                 break;
 
@@ -487,7 +488,7 @@ partial class TCodeGenerator
                     {
                         Operator(TInstruction.Call);
                         pAsmBuffer.Put('\t');
-                        NameLit(DefineConstants.FloatDivide);
+                        NameLit(FloatDivide);
                         pAsmBuffer.PutLine();
                     };
                     {
@@ -498,7 +499,7 @@ partial class TCodeGenerator
                         IntegerLit(8);
                         pAsmBuffer.PutLine();
                     };
-                    pResultType = pRealType;
+                    pResultType = Globals.pRealType;
                     break;
                 }
 
@@ -545,7 +546,7 @@ partial class TCodeGenerator
                         Reg(TRegister.Dx);
                         pAsmBuffer.PutLine();
                     };
-                    pResultType = pIntegerType;
+                    pResultType = Globals.pIntegerType;
                     break;
                 }
             }
@@ -593,7 +594,7 @@ partial class TCodeGenerator
             {
 
                 //--Push the number's integer or real value onto the stack.
-                if (pNode.pType == pIntegerType)
+                if (pNode.pType == Globals.pIntegerType)
                 {
 
                     {
@@ -605,13 +606,13 @@ partial class TCodeGenerator
                         IntegerLit(pNode.defn.constant.value.integer);
                         pAsmBuffer.PutLine();
                     };
-                    pResultType = pIntegerType;
+                    pResultType = Globals.pIntegerType;
                 } else
                 {
 
                     //--dx:ax = value
                     EmitLoadFloatLit(pNode);
-                    pResultType = pRealType;
+                    pResultType = Globals.pRealType;
                 }
 
                 GetToken();
@@ -638,7 +639,7 @@ partial class TCodeGenerator
                         CharLit(pNode.defn.constant.value.character);
                         pAsmBuffer.PutLine();
                     };
-                    pResultType = pCharType;
+                    pResultType = Globals.pCharType;
                 } else
                 {
 
@@ -666,7 +667,7 @@ partial class TCodeGenerator
                 IntegerLit(1);
                 pAsmBuffer.PutLine();
             };
-            pResultType = pBooleanType;
+            pResultType = Globals.pBooleanType;
             break;
 
             case TTokenCode.TcLParen:
@@ -697,11 +698,11 @@ partial class TCodeGenerator
     {
         TType pType = pId.pType;
 
-        if (pType == pRealType)
+        if (pType == Globals.pRealType)
 
             //--Real: dx:ax = value
             EmitLoadFloatLit(pId);
-        else if (pType == pCharType)
+        else if (pType == Globals.pCharType)
         {
 
             {
@@ -746,14 +747,14 @@ partial class TCodeGenerator
     //
     //  Return: ptr to variable's type object
     //--------------------------------------------------------------
-    public TType EmitVariable ( TSymtabNode pId, int addressFlag )
+    public TType EmitVariable ( TSymtabNode pId, bool addressFlag )
     {
         TType pType = pId.pType;
 
         //--It's not a scalar, or addressFlag is true, push the
         //--data address onto the stack. Otherwise, load the
         //--data value into ax or dx:ax.
-        if (addressFlag != 0 || (pType.IsScalar() == 0))
+        if (addressFlag || !pType.IsScalar())
             EmitPushAddress(pId);
         else
             EmitLoadValue(pId);
@@ -764,7 +765,7 @@ partial class TCodeGenerator
         //--emit code to evaluate them and modify the address.
         if ((token == TTokenCode.TcLBracket) || (token == TTokenCode.TcPeriod))
         {
-            int doneFlag = false;
+            var doneFlag = false;
 
             do
             {
@@ -783,12 +784,12 @@ partial class TCodeGenerator
                     doneFlag = true;
                     break;
                 }
-            } while (doneFlag == 0);
+            } while (!doneFlag);
 
             //--If addresssFlag is false and the variable is scalar,
             //--pop the address off the top of the stack and use it
             //--to load the value into ax or dx:ax.
-            if ((addressFlag == 0) && (pType.IsScalar()) != 0)
+            if (!addressFlag && pType.IsScalar())
             {
                 {
                     Operator(TInstruction.Pop);
@@ -796,7 +797,7 @@ partial class TCodeGenerator
                     Reg(TRegister.Bx);
                     pAsmBuffer.PutLine();
                 };
-                if (pType == pRealType)
+                if (pType == Globals.pRealType)
                 {
 
                     {
@@ -816,7 +817,7 @@ partial class TCodeGenerator
                         HighDWordIndirect(TRegister.Bx);
                         pAsmBuffer.PutLine();
                     };
-                } else if (pType.Base() == pCharType)
+                } else if (pType.Base() == Globals.pCharType)
                 {
 
                     {
@@ -883,8 +884,8 @@ partial class TCodeGenerator
                 minIndex = pType.array.minIndex;
                 elmtSize = pType.array.pElmtType.size;
 
-                //--Convert the subscript into an offset by subracting
-                //--the mininum index from it and then multiplying the
+                //--Convert the subscript into an offset by subtracting
+                //--the minimum index from it and then multiplying the
                 //--result by the element size.   Add the offset to the
                 //--address at the top of the stack.
                 if (minIndex != 0)

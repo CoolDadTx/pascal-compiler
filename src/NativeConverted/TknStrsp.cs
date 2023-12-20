@@ -36,13 +36,13 @@ public class TStringToken : TToken
     {
         char ch; // current character
                  //C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-        var ps = str; // ptr to char in string
+        var ps = this.String; // ptr to char in string
 
         *ps++= '\''; // opening quote
 
         //--Get the string.
         ch = buffer.GetChar(); // first char after opening quote
-        while (ch != eofChar)
+        while (ch != Globals.eofChar)
         {
             if (ch == '\'')
             { // look for another quote
@@ -65,8 +65,8 @@ public class TStringToken : TToken
             ch = buffer.GetChar();
         }
 
-        if (ch == eofChar)
-            Error(TErrorCode.ErrUnexpectedEndOfFile);
+        if (ch == Globals.eofChar)
+            Globals.Error(TErrorCode.ErrUnexpectedEndOfFile);
 
         *ps++= '\''; // closing quote
         *ps = '\0';
@@ -81,8 +81,8 @@ public class TStringToken : TToken
     //--------------------------------------------------------------
     public override void Print ()
     {
-        list.text = String.Format("\t{0,-18} {1}", ">> string:", string);
-        list.PutLine();
+        Globals.list.text = String.Format("\t{0,-18} {1}", ">> string:", string);
+        Globals.list.PutLine();
     }
 }
 
@@ -104,7 +104,7 @@ public class TSpecialToken : TToken
     {
         char ch = buffer.Char();
         //C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-        var ps = str;
+        var ps = this.String;
 
         *ps++= ch;
 
@@ -219,7 +219,7 @@ public class TSpecialToken : TToken
             default:
             code = TTokenCode.TcError; // error
             buffer.GetChar();
-            Error(TErrorCode.ErrUnrecognizable);
+            Globals.Error(TErrorCode.ErrUnrecognizable);
             break;
         }
 
@@ -235,8 +235,8 @@ public class TSpecialToken : TToken
     //--------------------------------------------------------------
     public override void Print ()
     {
-        list.text = String.Format("\t{0,-18} {1}", ">> special:", string);
-        list.PutLine();
+        Globals.list.text = String.Format("\t{0,-18} {1}", ">> special:", string);
+        Globals.list.PutLine();
     }
 }
 
@@ -259,11 +259,10 @@ public class TErrorToken : TToken
     //--------------------------------------------------------------
     public override void Get ( TTextInBuffer buffer )
     {
-        str[0] = buffer.Char();
-        str[1] = '\0';
-
+        this.String = buffer.Char().ToString();
+        
         buffer.GetChar();
-        Error(TErrorCode.ErrUnrecognizable);
+        Globals.Error(TErrorCode.ErrUnrecognizable);
     }
     public override bool IsDelimiter ()
     {

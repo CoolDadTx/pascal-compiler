@@ -28,7 +28,7 @@ partial class TParser
     {
         TType pArrayType = new TType(TFormCode.FcArray, 0, null);
         TType pElmtType = pArrayType;
-        int indexFlag; // true if another array index, false if done
+        var indexFlag = false; // true if another array index, false if done
 
         //-- [
         GetToken();
@@ -55,7 +55,7 @@ partial class TParser
                 indexFlag = false;
             }
 
-        } while (indexFlag != 0);
+        } while (indexFlag);
 
         //-- ]
         CondGetToken(TTokenCode.TcRBracket, TErrorCode.ErrMissingRightBracket);
@@ -112,10 +112,10 @@ partial class TParser
 BadIndexType:
 
 //--Error
-        SetType(pArrayType.array.pIndexType, pDummyType);
+        SetType(pArrayType.array.pIndexType, Globals.pDummyType);
         pArrayType.array.elmtCount = 0;
         pArrayType.array.minIndex = pArrayType.array.maxIndex = 0;
-        Error(TErrorCode.ErrInvalidIndexType);
+        Globals.Error(TErrorCode.ErrInvalidIndexType);
     }
 
     //--------------------------------------------------------------

@@ -322,7 +322,7 @@ public class TType : System.IDisposable
 	//
 	//  Return: ptr to source type object
 	//--------------------------------------------------------------
-	public TType SetType( ref TType pTargetType, TType pSourceType )
+	public static TType SetType( ref TType pTargetType, TType pSourceType )
 	{
 		if (pTargetType == null)
 			RemoveType(ref pTargetType);
@@ -340,7 +340,7 @@ public class TType : System.IDisposable
 	//
 	//      pType : ref to ptr to type object
 	//--------------------------------------------------------------
-	public void RemoveType( ref TType pType )
+	public static void RemoveType( ref TType pType )
 	{
 		if (pType != null && (--pType.refCount == 0))
 		{
@@ -364,7 +364,7 @@ public class TType : System.IDisposable
 	//      pType2 : ptr to the second operand's type object
 	//--------------------------------------------------------------
 
-	public void CheckRelOpOperands( TType pType1, TType pType2 )
+	public static void CheckRelOpOperands( TType pType1, TType pType2 )
 	{
 		pType1 = pType1.Base();
 		pType2 = pType2.Base();
@@ -394,7 +394,7 @@ public class TType : System.IDisposable
 	//      pType2 : ptr to the second operand's type object or NULL
 	//--------------------------------------------------------------
 
-	public void CheckIntegerOrReal( TType pType1, TType pType2 = null )
+	public static void CheckIntegerOrReal( TType pType1, TType pType2 = null )
 	{
 		pType1 = pType1.Base();
 		if ( ( pType1 != Globals.pIntegerType ) && ( pType1 != Globals.pRealType ) )
@@ -417,7 +417,7 @@ public class TType : System.IDisposable
 	//      pType2 : ptr to the second operand's type object or NULL
 	//--------------------------------------------------------------
 
-	public void CheckBoolean( TType pType1, TType pType2 = null )
+	public static void CheckBoolean( TType pType1, TType pType2 = null )
 	{
 		if ( ( pType1.Base() != Globals.pBooleanType ) || (pType2 != null && (pType2.Base() != Globals.pBooleanType)) )
             Globals.Error( TErrorCode.ErrIncompatibleTypes );
@@ -434,7 +434,7 @@ public class TType : System.IDisposable
 	//      ec          : error code
 	//--------------------------------------------------------------
 
-	public void CheckAssignmentTypeCompatible( TType pTargetType, TType pValueType, TErrorCode ec )
+	public static void CheckAssignmentTypeCompatible( TType pTargetType, TType pValueType, TErrorCode ec )
 	{
 		pTargetType = pTargetType.Base();
 		pValueType = pValueType.Base();
@@ -466,7 +466,7 @@ public class TType : System.IDisposable
 	//  Return: true if yes, false if no
 	//--------------------------------------------------------------
 
-	public bool IntegerOperands( TType pType1, TType pType2 )
+	public static bool IntegerOperands( TType pType1, TType pType2 )
 	{
 		pType1 = pType1.Base();
 		pType2 = pType2.Base();
@@ -485,7 +485,7 @@ public class TType : System.IDisposable
 	//  Return: true if yes, false if no
 	//--------------------------------------------------------------
 
-	public bool RealOperands( TType pType1, TType pType2 )
+	public static bool RealOperands( TType pType1, TType pType2 )
 	{
 		pType1 = pType1.Base();
 		pType2 = pType2.Base();
