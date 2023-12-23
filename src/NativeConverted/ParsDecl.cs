@@ -43,8 +43,8 @@ partial class TParser
             GetToken();
             ParseVariableDeclarations(pRoutineId);
         }
-
-        if (TokenIn(token, tlProcFuncStart) != 0)
+        
+        if (Globals.TokenIn(token, tlProcFuncStart) != 0)
             ParseSubroutineDeclarations(pRoutineId);
     }
 
@@ -69,7 +69,7 @@ partial class TParser
                                     //   in local list
 
         //--Loop to parse a list of constant definitions
-        //--seperated by semicolons.
+        //--separated by semicolons.
         while (token == TTokenCode.TcIdentifier)
         {
 
@@ -113,7 +113,7 @@ partial class TParser
         TTokenCode sign = TTokenCode.TcDummy; // unary + or - sign, or none
 
         //--Unary + or -
-        if (TokenIn(token, tlUnaryOps) != 0)
+        if (Globals.TokenIn(token, tlUnaryOps) != 0)
         {
             if (token == TTokenCode.TcMinus)
                 sign = TTokenCode.TcMinus;
@@ -127,12 +127,12 @@ partial class TParser
             case TTokenCode.TcNumber:
             if (pToken.Type() == TDataType.TyInteger)
             {
-                pConstId.defn.constant.value.integer = (int)sign == ((int)TTokenCode.TcMinus) != 0 ? -pToken.Value().integer : pToken.Value().integer;
-                SetType(pConstId.pType, pIntegerType);
+                pConstId.defn.constant.value.integer = sign == TTokenCode.TcMinus ? -pToken.Value().integer : pToken.Value().integer;
+                TType.SetType(pConstId.pType, pIntegerType);
             } else
             {
-                pConstId.defn.constant.value.real = (int)sign == ((int)TTokenCode.TcMinus) != 0 ? -pToken.Value().real : pToken.Value().real;
-                SetType(pConstId.pType, pRealType);
+                pConstId.defn.constant.value.real = sign == TTokenCode.TcMinus ? -pToken.Value().real : pToken.Value().real;
+                TType.SetType(pConstId.pType, pRealType);
             }
 
             GetToken();
@@ -155,17 +155,16 @@ partial class TParser
             if (length == 1)
             {
                 pConstId.defn.constant.value.character = pToken.String[1];
-                SetType(pConstId.pType, Globals.pCharType);
+                TType.SetType(pConstId.pType, Globals.pCharType);
             }
 
             //--String (character array):  Create a new unnamed
             //--                           string type.
             else
             {
-                string pString = new string(new char[length - 1]);
-                CopyQuotedString(pString, pToken.String);
+                var pString = CopyQuotedString(pToken.String);
                 pConstId.defn.constant.value.pString = pString;
-                SetType(pConstId.pType, new TType(length));
+                TType.SetType(ref pConstId.pType, new TType(length));
             }
 
             GetToken();
@@ -194,7 +193,7 @@ partial class TParser
         if (pId2.defn.how != TDefnCode.DcConstant)
         {
             Globals.Error(TErrorCode.ErrNotAConstantIdentifier);
-            SetType(pId1.pType, Globals.pDummyType);
+            TType.SetType(ref pId1.pType, Globals.pDummyType);
             GetToken();
             return;
         }
@@ -203,14 +202,14 @@ partial class TParser
         if (pId2.pType == Globals.pIntegerType)
         {
             pId1.defn.constant.value.integer = sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.integer : pId2.defn.constant.value.integer;
-            SetType(pId1.pType, Globals.pIntegerType);
+            TType.SetType(ref pId1.pType, Globals.pIntegerType);
         }
 
         //--Real identifier
         else if (pId2.pType == Globals.pRealType)
         {
             pId1.defn.constant.value.real = sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.real : pId2.defn.constant.value.real;
-            SetType(pId1.pType, Globals.pRealType);
+            TType.SetType(ref pId1.pType, Globals.pRealType);
         }
 
         //--Character identifier:  No unary sign allowed.
@@ -220,7 +219,7 @@ partial class TParser
                 Globals.Error(TErrorCode.ErrInvalidConstant);
 
             pId1.defn.constant.value.character = pId2.defn.constant.value.character;
-            SetType(pId1.pType, Globals.pCharType);
+            TType.SetType(ref pId1.pType, Globals.pCharType);
         }
 
         //--Enumeration identifier:  No unary sign allowed.
@@ -230,7 +229,7 @@ partial class TParser
                 Globals.Error(TErrorCode.ErrInvalidConstant);
 
             pId1.defn.constant.value.integer = pId2.defn.constant.value.integer;
-            SetType(pId1.pType, pId2.pType);
+            TType.SetType(ref pId1.pType, pId2.pType);
         }
 
         //--Array identifier:  Must be character array, and
@@ -241,7 +240,7 @@ partial class TParser
                 Globals.Error(TErrorCode.ErrInvalidConstant);
 
             pId1.defn.constant.value.pString = pId2.defn.constant.value.pString;
-            SetType(pId1.pType, pId2.pType);
+            TType.SetType(ref pId1.pType, pId2.pType);
         }
 
         GetToken();
@@ -308,7 +307,7 @@ partial class TParser
         {
 
             //--<id-sublist>
-            pFirstId = ParseIdSublist(pRoutineId, pRecordType, pLastId);
+            pFirstId = ParseIdSublist(pRoutineId, pRecordType, out pLastId);
 
             //-- :
             Resync(tlSublistFollow, tlDeclarationFollow);
@@ -321,13 +320,13 @@ partial class TParser
             //--identifier in the sublist.
             for (pId = pFirstId; pId != null; pId = pId.next)
             {
-                SetType(pId.pType, pType);
+                TType.SetType(ref pId.pType, pType);
 
                 if (pRoutineId != null)
                 {
 
                     //--Variables
-                    if (execFlag)
+                    if (Globals.execFlag)
                         pId.defn.data.offset = offset++;
                     else
                     {
@@ -400,7 +399,7 @@ partial class TParser
     //      pLastId     : ref to ptr that will be set to point to the
     //                    last symbol table node of the sublist
     //--------------------------------------------------------------
-    public TSymtabNode ParseIdSublist ( TSymtabNode pRoutineId, TType pRecordType, ref TSymtabNode pLastId )
+    public TSymtabNode ParseIdSublist ( TSymtabNode pRoutineId, TType pRecordType, out TSymtabNode pLastId )
     {
         TSymtabNode pId;
         TSymtabNode pFirstId = null;

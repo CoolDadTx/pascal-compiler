@@ -32,7 +32,7 @@ partial class TParser
 
         //--If we now see a relational operator,
         //--parse the second simple expression.
-        if (TokenIn(token, tlRelOps) != 0)
+        if (Globals.TokenIn(token, tlRelOps) != 0)
         {
             GetTokenAppend();
             pOperandType = ParseSimpleExpression();
@@ -63,7 +63,7 @@ partial class TParser
         var unaryOpFlag = false; // true if unary op, else false
 
         //--Unary + or -
-        if (TokenIn(token, tlUnaryOps) != 0)
+        if (Globals.TokenIn(token, tlUnaryOps) != 0)
         {
             unaryOpFlag = true;
             GetTokenAppend();
@@ -73,11 +73,11 @@ partial class TParser
         pResultType = ParseTerm();
 
         //--If there was a unary sign, check the term's type.
-        if (unaryOpFlag != 0)
+        if (unaryOpFlag)
             CheckIntegerOrReal(pResultType);
 
         //--Loop to parse subsequent additive operators and terms.
-        while (TokenIn(token, tlAddOps) != 0)
+        while (Globals.TokenIn(token, tlAddOps) != 0)
         {
 
             //--Remember the operator and parse the subsequent term.
@@ -135,7 +135,7 @@ partial class TParser
         pResultType = ParseFactor();
 
         //--Loop to parse subsequent multiplicative operators and factors.
-        while (TokenIn(token, tlMulOps) != 0)
+        while (Globals.TokenIn(token, tlMulOps) != 0)
         {
 
             //--Remember the operator and parse the subsequent factor.
@@ -224,7 +224,7 @@ partial class TParser
                 if (pNode.defn.how == TDefnCode.DcUndefined)
                 {
                     pNode.defn.how = TDefnCode.DcVariable;
-                    SetType(pNode.pType, pDummyType);
+                    TType.SetType(ref pNode.pType, Globals.pDummyType);
                 }
 
                 //--Based on how the identifier is defined,
@@ -274,7 +274,7 @@ partial class TParser
                         pResultType = Globals.pRealType;
                         pNode.defn.constant.value.real = pToken.Value().real;
                     }
-                    SetType(pNode.pType, pResultType);
+                    TType.SetType(ref pNode.pType, pResultType);
                 }
 
                 //--Append the symbol table node handle to the icode.
@@ -289,19 +289,19 @@ partial class TParser
             {
 
                 //--Search for the string and enter it if necessary.
-                char[] pString = pToken.String;
+                var pString = pToken.String;
                 TSymtabNode pNode = SearchAll(pString);
                 if (pNode == null)
                 {
                     pNode = EnterLocal(pString);
-                    pString = pNode.String;
+                    pString = pNode.String();
 
                     //--Compute the string length (without the quotes).
                     //--If the length is 1, the result type is character,
                     //--else create a new string type.
                     int length = pString.Length - 2;
                     pResultType = length == 1 ? Globals.pCharType : new TType(length);
-                    SetType(pNode.pType, pResultType);
+                    TType.SetType(ref pNode.pType, pResultType);
 
                     //--Set the character value or string pointer into the
                     //--symbol table node.

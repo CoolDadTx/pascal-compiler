@@ -15,8 +15,7 @@
         //--and then parse the file.
         var pParser = new TParser(new TSourceBuffer(args[1]));
         TSymtabNode pProgramId = pParser.Parse();
-        if (pParser != null)
-            pParser.Dispose();
+        pParser?.Dispose();
 
         //--If there were no syntax errors, convert the symbol tables,
         //--and create and invoke the backend code generator.

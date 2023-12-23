@@ -249,7 +249,7 @@ partial class TParser
     //
     //  Return: ptr to the real type object
     //--------------------------------------------------------------
-    public TType*ParseArctanCosExpLnSinSqrtCall ()
+    public TType ParseArctanCosExpLnSinSqrtCall ()
     {
         //--There should be one integer or real parameter.
         if (token == TTokenCode.TcLParen)

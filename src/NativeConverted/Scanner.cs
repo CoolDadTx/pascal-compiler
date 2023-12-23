@@ -117,8 +117,7 @@ public class TTextScanner : TScanner
 	}
 	public override void Dispose()
 	{
-		if ( pTextInBuffer != null )
-			pTextInBuffer.Dispose();
+    	pTextInBuffer?.Dispose();
 		base.Dispose();
 	}
     

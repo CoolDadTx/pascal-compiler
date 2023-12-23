@@ -42,7 +42,7 @@ partial class TParser
                 if (pNode.defn.how == TDefnCode.DcUndefined)
                 {
                     pNode.defn.how = TDefnCode.DcVariable;
-                    SetType(pNode.pType, Globals.pDummyType);
+                    TType.SetType(ref pNode.pType, Globals.pDummyType);
                     ParseAssignment(pNode);
                 } else if (pNode.defn.how == TDefnCode.DcProcedure)
                 {
@@ -93,7 +93,7 @@ partial class TParser
         {
             ParseStatement();
 
-            if (TokenIn(token, tlStatementStart) != 0)
+            if (Globals.TokenIn(token, tlStatementStart))
                 Globals.Error(TErrorCode.ErrMissingSemicolon);
             else
             {
@@ -264,7 +264,7 @@ partial class TParser
 
         //--TO or DOWNTO
         Resync(tlTODOWNTO, tlExpressionStart);
-        if (TokenIn(token, tlTODOWNTO) != 0)
+        if (Globals.TokenIn(token, tlTODOWNTO))
             GetTokenAppend();
         else
             Globals.Error(TErrorCode.ErrMissingTOorDOWNTO);
@@ -292,8 +292,6 @@ partial class TParser
     public void ParseCASE ()
     {
         TCaseItem pCaseItemList; // ptr to list of CASE items
-        var caseBranchFlag = false; // true if another CASE branch,
-                            //   else false
 
         pCaseItemList = null;
 
@@ -316,17 +314,19 @@ partial class TParser
         CondGetTokenAppend(TTokenCode.TcOF, TErrorCode.ErrMissingOF);
 
         //--Loop to parse CASE branches.
-        caseBranchFlag = TokenIn(token, tlCaseLabelStart);
-        while (caseBranchFlag != 0)
+        // true if another CASE branch,
+        //   else false
+        var caseBranchFlag = Globals.TokenIn(token, tlCaseLabelStart);
+        while (caseBranchFlag)
         {
-            if (TokenIn(token, tlCaseLabelStart) != 0)
-                ParseCaseBranch(pExprType, pCaseItemList);
+            if (Globals.TokenIn(token, tlCaseLabelStart))
+                ParseCaseBranch(pExprType, ref pCaseItemList);
 
             if (token == TTokenCode.TcSemicolon)
             {
                 GetTokenAppend();
                 caseBranchFlag = true;
-            } else if (TokenIn(token, tlCaseLabelStart))
+            } else if (Globals.TokenIn(token, tlCaseLabelStart))
             {
                 Globals.Error(TErrorCode.ErrMissingSemicolon);
                 caseBranchFlag = true;
@@ -376,7 +376,7 @@ partial class TParser
 
                 //--Saw comma, look for another CASE label.
                 GetTokenAppend();
-                if (TokenIn(token, tlCaseLabelStart) != 0)
+                if (Globals.TokenIn(token, tlCaseLabelStart))
                     caseLabelFlag = true;
                 else
                 {
@@ -418,7 +418,7 @@ partial class TParser
         TCaseItem pCaseItem = new TCaseItem(ref pCaseItemList);
 
         //--Unary + or -
-        if (TokenIn(token, tlUnaryOps) != 0)
+        if (Globals.TokenIn(token, tlUnaryOps))
         {
             signFlag = true;
             GetTokenAppend();
@@ -440,7 +440,7 @@ partial class TParser
                 else
                 {
                     pLabelId.defn.how = TDefnCode.DcConstant;
-                    SetType(pLabelId.pType, Globals.pDummyType);
+                    TType.SetType(ref pLabelId.pType, Globals.pDummyType);
                     pLabelType = Globals.pDummyType;
                 }
                 if (pExprType != pLabelType)
@@ -474,7 +474,7 @@ partial class TParser
                 if (pNode == null)
                 {
                     pNode = EnterLocal(pToken.String);
-                    pNode.pType = pIntegerType;
+                    pNode.pType = Globals.pIntegerType;
                     pNode.defn.constant.value.integer = pToken.Value().integer;
                 }
                 icode.Put(pNode);

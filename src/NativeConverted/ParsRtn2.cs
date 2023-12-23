@@ -127,13 +127,13 @@ partial class TParser
                 for (pParmId = pFirstId; pParmId != null; pParmId = pParmId.next)
                 {
                     pParmId.defn.data.offset = totalSize++;
-                    SetType(pParmId.pType, pParmType);
+                    TType.SetType(ref pParmId.pType, pParmType);
                 }
             } else
             {
                 //--Loop to assign the type to each parm id in the sublist.
                 for (pParmId = pFirstId; pParmId != null; pParmId = pParmId.next)
-                    SetType(pParmId.pType, pParmType);
+                    TType.SetType(ref pParmId.pType, pParmType);
             }
 
             //--Link this sublist to the previous sublist.

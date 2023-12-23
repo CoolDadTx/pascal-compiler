@@ -46,25 +46,13 @@ public abstract class TBackend : IDisposable
         pNode = pIcode.SymtabNode();
     }
 
-    protected void GoTo ( int location )
-    {
-        pIcode.GoTo(location);
-    }
+    protected void GoTo ( int location ) => pIcode.GoTo(location);
 
-    protected int CurrentLocation ()
-    {
-        return pIcode.CurrentLocation();
-    }
+    protected int CurrentLocation () => pIcode.CurrentLocation();
 
-    protected int GetLocationMarker ()
-    {
-        return pIcode.GetLocationMarker();
-    }
+    protected int GetLocationMarker () => pIcode.GetLocationMarker();
 
-    protected void GetCaseItem ( ref int value, ref int location )
-    {
-        pIcode.GetCaseItem(ref value, ref location);
-    }
+    protected void GetCaseItem ( ref int value, ref int location ) => pIcode.GetCaseItem(ref value, ref location);
 
 
     //--------------------------------------------------------------

@@ -11,7 +11,7 @@ public abstract class TTextInBuffer : System.IDisposable
     protected readonly string pFileName; // ptr to the file name
                                          //protected string text = new string( new char[maxInputBufferSize] );
     protected string text; // input text buffer
-    protected char pChar; // ptr to the current char
+    protected char pChar { get; set; } // ptr to the current char
                           //   in the text buffer
 
     protected abstract char GetLine ();
@@ -42,15 +42,9 @@ public abstract class TTextInBuffer : System.IDisposable
         };
     }
 
-    public virtual void Dispose ()
-    {
-        file.Close();
-    }
+    public virtual void Dispose () => file.Close();
 
-    public char Char ()
-    {
-        return pChar;
-    }
+    public char Char () => pChar;
 
     //--------------------------------------------------------------
     //  GetChar         Fetch and return the next character from the
@@ -73,7 +67,7 @@ public abstract class TTextInBuffer : System.IDisposable
             ch = GetLine(); // end of line
         else
         {
-            //TODO: Need enumeration
+            //TODO: Enumeration
             // next char
             ++pChar;
             ++Globals.inputPosition;

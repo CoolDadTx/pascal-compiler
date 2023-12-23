@@ -51,7 +51,7 @@ partial class TParser
             CondGetToken(TTokenCode.TcEqual, TErrorCode.ErrMissingEqual);
 
             //--<type>
-            SetType(pTypeId.pType, ParseTypeSpec());
+            TType.SetType(ref pTypeId.pType, ParseTypeSpec());
             pTypeId.defn.how = TDefnCode.DcType;
 
             //--If the type object doesn't have a name yet,
@@ -175,7 +175,7 @@ partial class TParser
             {
                 pConstId.defn.how = TDefnCode.DcConstant;
                 pConstId.defn.constant.value.integer = constValue;
-                SetType(pConstId.pType, pType);
+                TType.SetType(ref pConstId.pType, pType);
 
                 //--Link constant identifier symbol table nodes together.
                 if (pLastId == null)
@@ -238,7 +238,7 @@ partial class TParser
         TType pType = new TType(TFormCode.FcSubrange, 0, null);
 
         //--<min-const>
-        SetType(pType.subrange.pBaseType, ParseSubrangeLimit(pMinId, pType.subrange.min));
+        TType.SetType(ref pType.subrange.pBaseType, ParseSubrangeLimit(pMinId, pType.subrange.min));
 
         //-- ..
         Resync(tlSubrangeLimitFollow, tlDeclarationStart);
@@ -284,7 +284,7 @@ partial class TParser
         limit = 0;
 
         //--Unary + or -
-        if (TokenIn(token, tlUnaryOps) != 0)
+        if (Globals.TokenIn(token, tlUnaryOps))
         {
             if (token == TTokenCode.TcMinus)
                 sign = TTokenCode.TcMinus;
@@ -317,7 +317,7 @@ partial class TParser
             if (pLimitId.defn.how == TDefnCode.DcUndefined)
             {
                 pLimitId.defn.how = TDefnCode.DcConstant;
-                pType = SetType(pLimitId.pType, Globals.pDummyType);
+                pType = TType.SetType(ref pLimitId.pType, Globals.pDummyType);
                 break;
             } else if ((pLimitId.pType == Globals.pRealType) || (pLimitId.pType == Globals.pDummyType) || (pLimitId.pType.form == TFormCode.FcArray))
                 Globals.Error(TErrorCode.ErrInvalidSubrangeType);

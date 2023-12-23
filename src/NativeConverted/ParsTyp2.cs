@@ -42,12 +42,12 @@ partial class TParser
 
             //-- ,
             Resync(tlIndexFollow, tlIndexStart);
-            if ((token == TTokenCode.TcComma) || TokenIn(token, tlIndexStart) != 0)
+            if ((token == TTokenCode.TcComma) || Globals.TokenIn(token, tlIndexStart))
             {
 
                 //--For each type spec after the first, create an
                 //--element type object.
-                pElmtType = SetType(pElmtType.array.pElmtType, new TType(TFormCode.FcArray, 0, null));
+                pElmtType = TType.SetType(ref pElmtType.array.pElmtType, new TType(TFormCode.FcArray, 0, null));
                 CondGetToken(TTokenCode.TcComma, TErrorCode.ErrMissingComma);
                 indexFlag = true;
             } else
@@ -65,7 +65,7 @@ partial class TParser
         CondGetToken(TTokenCode.TcOF, TErrorCode.ErrMissingOF);
 
         //--Final element type.
-        SetType(pElmtType.array.pElmtType, ParseTypeSpec());
+        TType.SetType(ref pElmtType.array.pElmtType, ParseTypeSpec());
 
         //--Total byte size of the array.
         if (pArrayType.form != TFormCode.FcNone)
@@ -81,10 +81,10 @@ partial class TParser
     //--------------------------------------------------------------
     public void ParseIndexType ( TType pArrayType )
     {
-        if (TokenIn(token, tlIndexStart) != 0)
+        if (Globals.TokenIn(token, tlIndexStart))
         {
             TType pIndexType = ParseTypeSpec();
-            SetType(pArrayType.array.pIndexType, pIndexType);
+            TType.SetType(ref pArrayType.array.pIndexType, pIndexType);
 
             switch (pIndexType.form)
             {
@@ -112,7 +112,7 @@ partial class TParser
 BadIndexType:
 
 //--Error
-        SetType(pArrayType.array.pIndexType, Globals.pDummyType);
+        TType.SetType(ref pArrayType.array.pIndexType, Globals.pDummyType);
         pArrayType.array.elmtCount = 0;
         pArrayType.array.minIndex = pArrayType.array.maxIndex = 0;
         Globals.Error(TErrorCode.ErrInvalidIndexType);
