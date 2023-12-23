@@ -29,8 +29,7 @@ public class TCaseItem
     public TCaseItem ( ref TCaseItem pListHead )
     {
         next = pListHead; // insert at head of list
-        pListHead = this;
-        atBranchStmt = 0;
+        pListHead = this;        
     }
 }
 

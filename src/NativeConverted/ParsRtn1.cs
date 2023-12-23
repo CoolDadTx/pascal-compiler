@@ -29,10 +29,10 @@ partial class TParser
         TSymtabNode pProgramId = ParseProgramHeader();
 
         //-- ;
-        Resync(tlHeaderFollow, tlDeclarationStart, tlStatementStart);
+        Resync(Globals.tlHeaderFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
         if (token == TTokenCode.TcSemicolon)
             GetToken();
-        else if (Globals.TokenIn(token, tlDeclarationStart) || Globals.TokenIn(token, tlStatementStart))
+        else if (Globals.TokenIn(token, Globals.tlDeclarationStart) || Globals.TokenIn(token, Globals.tlStatementStart))
             Globals.Error(TErrorCode.ErrMissingSemicolon);
 
         //--<block>
@@ -40,7 +40,7 @@ partial class TParser
         pProgramId.defn.routine.pSymtab = symtabStack.ExitScope();
 
         //-- .
-        Resync(tlProgramEnd);
+        Resync(Globals.tlProgramEnd);
         CondGetTokenAppend(TTokenCode.TcPeriod, TErrorCode.ErrMissingPeriod);
 
         return pProgramId;
@@ -59,7 +59,7 @@ partial class TParser
     //--------------------------------------------------------------
     public TSymtabNode ParseProgramHeader ()
     {
-        TSymtabNode pProgramId; // ptr to program id node
+        TSymtabNode pProgramId = null; // ptr to program id node
 
         //--PROGRAM
         CondGetToken(TTokenCode.TcPROGRAM, TErrorCode.ErrMissingPROGRAM);
@@ -87,7 +87,7 @@ partial class TParser
         }
 
         //-- ( or ;
-        Resync(tlProgProcIdFollow, tlDeclarationStart, tlStatementStart);
+        Resync(Globals.tlProgProcIdFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
 
         //--Enter the nesting level 1 and open a new scope for the program.
         symtabStack.EnterScope();
@@ -122,7 +122,7 @@ partial class TParser
             } while (token == TTokenCode.TcComma);
 
             //-- )
-            Resync(tlFormalParmsFollow, tlDeclarationStart, tlStatementStart);
+            Resync(Globals.tlFormalParmsFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
             CondGetToken(TTokenCode.TcRParen, TErrorCode.ErrMissingRightParen);
         }
 
@@ -142,7 +142,7 @@ partial class TParser
                                     //   in local list
 
         //--Loop to parse procedure and function definitions.
-        while (Globals.TokenIn(token, tlProcFuncStart))
+        while (Globals.TokenIn(token, Globals.tlProcFuncStart))
         {
             TSymtabNode pRtnId = ParseSubroutine();
 
@@ -154,10 +154,10 @@ partial class TParser
             pLastId = pRtnId;
 
             //-- ;
-            Resync(tlDeclarationFollow, tlProcFuncStart, tlStatementStart);
+            Resync(Globals.tlDeclarationFollow, Globals.tlProcFuncStart, Globals.tlStatementStart);
             if (token == TTokenCode.TcSemicolon)
                 GetToken();
-            else if (Globals.TokenIn(token, tlProcFuncStart) || Globals.TokenIn(token, tlStatementStart))
+            else if (Globals.TokenIn(token, Globals.tlProcFuncStart) || Globals.TokenIn(token, Globals.tlStatementStart))
                 Globals.Error(TErrorCode.ErrMissingSemicolon);
         }
     }
@@ -179,10 +179,10 @@ partial class TParser
         TSymtabNode pRoutineId = (token == TTokenCode.TcPROCEDURE) ? ParseProcedureHeader() : ParseFunctionHeader();
 
         //-- ;
-        Resync(tlHeaderFollow, tlDeclarationStart, tlStatementStart);
+        Resync(Globals.tlHeaderFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
         if (token == TTokenCode.TcSemicolon)
             GetToken();
-        else if (Globals.TokenIn(token, tlDeclarationStart) || Globals.TokenIn(token, tlStatementStart))
+        else if (Globals.TokenIn(token, Globals.tlDeclarationStart) || Globals.TokenIn(token, Globals.tlStatementStart))
             Globals.Error(TErrorCode.ErrMissingSemicolon);
 
         //--<block> or forward
@@ -213,7 +213,7 @@ partial class TParser
     //--------------------------------------------------------------
     public TSymtabNode ParseProcedureHeader ()
     {
-        TSymtabNode pProcId; // ptr to procedure id node
+        TSymtabNode pProcId = null; // ptr to procedure id node
         var forwardFlag = false; // true if forwarded, false if not
 
         GetToken();
@@ -229,7 +229,7 @@ partial class TParser
                 //--Not already declared.
                 pProcId = EnterLocal(pToken.String, TDefnCode.DcProcedure);
                 pProcId.defn.routine.totalLocalSize = 0;
-                TType.SetType(ref pProcId.pType, pDummyType);
+                TType.SetType(ref pProcId.pType, Globals.pDummyType);
             } else if ((pProcId.defn.how == TDefnCode.DcProcedure) && (pProcId.defn.routine.which == TRoutineCode.RcForward))
             {
 
@@ -247,7 +247,7 @@ partial class TParser
         }
 
         //-- ( or ;
-        Resync(tlProgProcIdFollow, tlDeclarationStart, tlStatementStart);
+        Resync(Globals.tlProgProcIdFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
 
         //--Enter the next nesting level and open a new scope
         //--for the procedure.
@@ -261,7 +261,7 @@ partial class TParser
         {
             int parmCount; // count of formal parms
             int totalParmSize; // total byte size of all parms
-            TSymtabNode pParmList = ParseFormalParmList(parmCount, totalParmSize);
+            TSymtabNode pParmList = ParseFormalParmList(out parmCount, out totalParmSize);
 
             if (forwardFlag)
                 Globals.Error(TErrorCode.ErrAlreadyForwarded);
@@ -309,7 +309,7 @@ partial class TParser
     //--------------------------------------------------------------
     public TSymtabNode ParseFunctionHeader ()
     {
-        TSymtabNode pFuncId; // ptr to function id node
+        TSymtabNode pFuncId = null; // ptr to function id node
         var forwardFlag = false; // true if forwarded, false if not
 
         GetToken();
@@ -342,7 +342,7 @@ partial class TParser
         }
 
         //-- ( or : or ;
-        Resync(tlFuncIdFollow, tlDeclarationStart, tlStatementStart);
+        Resync(Globals.tlFuncIdFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
 
         //--Enter the next nesting level and open a new scope
         //--for the function.
@@ -356,7 +356,7 @@ partial class TParser
         {
             int parmCount; // count of formal parms
             int totalParmSize; // total byte size of all parms
-            TSymtabNode pParmList = ParseFormalParmList(parmCount, totalParmSize);
+            TSymtabNode pParmList = ParseFormalParmList(out parmCount, out totalParmSize);
 
             if (forwardFlag)
                 Globals.Error(TErrorCode.ErrAlreadyForwarded);
@@ -425,7 +425,7 @@ partial class TParser
 
         //--<compound-statement> : Reset the icode and append BEGIN to it,
         //--                       and then parse the compound statement.
-        Resync(tlStatementStart);
+        Resync(Globals.tlStatementStart);
         if (token != TTokenCode.TcBEGIN)
             Globals.Error(TErrorCode.ErrMissingBEGIN);
         icode.Reset();

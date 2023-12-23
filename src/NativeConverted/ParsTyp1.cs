@@ -60,13 +60,13 @@ partial class TParser
                 pTypeId.pType.pTypeId = pTypeId;
 
             //-- ;
-            Resync(tlDeclarationFollow, tlDeclarationStart, tlStatementStart);
+            Resync(Globals.tlDeclarationFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
             CondGetToken(TTokenCode.TcSemicolon, TErrorCode.ErrMissingSemicolon);
 
             //--Skip extra semicolons.
             while (token == TTokenCode.TcSemicolon)
                 GetToken();
-            Resync(tlDeclarationFollow, tlDeclarationStart, tlStatementStart);
+            Resync(Globals.tlDeclarationFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
         }
     }
 
@@ -163,7 +163,7 @@ partial class TParser
         int constValue = -1; // enumeration constant value
 
         GetToken();
-        Resync(tlEnumConstStart);
+        Resync(Globals.tlEnumConstStart);
 
         //--Loop to parse list of constant identifiers separated by commas.
         while (token == TTokenCode.TcIdentifier)
@@ -189,7 +189,7 @@ partial class TParser
 
             //-- ,
             GetToken();
-            Resync(tlEnumConstFollow);
+            Resync(Globals.tlEnumConstFollow);
             if (token == TTokenCode.TcComma)
             {
 
@@ -198,7 +198,7 @@ partial class TParser
                 do
                 {
                     GetToken();
-                    Resync(tlEnumConstStart, tlEnumConstFollow);
+                    Resync(Globals.tlEnumConstStart, Globals.tlEnumConstFollow);
                     if (token == TTokenCode.TcComma)
                         Globals.Error(TErrorCode.ErrMissingIdentifier);
                 } while (token == TTokenCode.TcComma);
@@ -241,7 +241,7 @@ partial class TParser
         TType.SetType(ref pType.subrange.pBaseType, ParseSubrangeLimit(pMinId, pType.subrange.min));
 
         //-- ..
-        Resync(tlSubrangeLimitFollow, tlDeclarationStart);
+        Resync(Globals.tlSubrangeLimitFollow, Globals.tlDeclarationStart);
         CondGetToken(TTokenCode.TcDotDot, TErrorCode.ErrMissingDotDot);
 
         //--<max-const>
@@ -284,7 +284,7 @@ partial class TParser
         limit = 0;
 
         //--Unary + or -
-        if (Globals.TokenIn(token, tlUnaryOps))
+        if (Globals.TokenIn(token, Globals.tlUnaryOps))
         {
             if (token == TTokenCode.TcMinus)
                 sign = TTokenCode.TcMinus;

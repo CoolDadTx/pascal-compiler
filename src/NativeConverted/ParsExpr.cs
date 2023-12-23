@@ -32,18 +32,18 @@ partial class TParser
 
         //--If we now see a relational operator,
         //--parse the second simple expression.
-        if (Globals.TokenIn(token, tlRelOps) != 0)
+        if (Globals.TokenIn(token, Globals.tlRelOps))
         {
             GetTokenAppend();
             pOperandType = ParseSimpleExpression();
 
             //--Check the operand types and return the boolean type.
-            CheckRelOpOperands(pResultType, pOperandType);
+            TType.CheckRelOpOperands(pResultType, pOperandType);
             pResultType = Globals.pBooleanType;
         }
 
         //--Make sure the expression ended properly.
-        Resync(tlExpressionFollow, tlStatementFollow, tlStatementStart);
+        Resync(Globals.tlExpressionFollow, Globals.tlStatementFollow, Globals.tlStatementStart);
 
         return pResultType;
     }
@@ -63,7 +63,7 @@ partial class TParser
         var unaryOpFlag = false; // true if unary op, else false
 
         //--Unary + or -
-        if (Globals.TokenIn(token, tlUnaryOps) != 0)
+        if (Globals.TokenIn(token, Globals.tlUnaryOps))
         {
             unaryOpFlag = true;
             GetTokenAppend();
@@ -74,10 +74,10 @@ partial class TParser
 
         //--If there was a unary sign, check the term's type.
         if (unaryOpFlag)
-            CheckIntegerOrReal(pResultType);
+            TType.CheckIntegerOrReal(pResultType);
 
         //--Loop to parse subsequent additive operators and terms.
-        while (Globals.TokenIn(token, tlAddOps) != 0)
+        while (Globals.TokenIn(token, Globals.tlAddOps))
         {
 
             //--Remember the operator and parse the subsequent term.
@@ -93,13 +93,13 @@ partial class TParser
                 case TTokenCode.TcMinus:
 
                 //--integer <op> integer => integer
-                if (IntegerOperands(pResultType, pOperandType))
+                if (TType.IntegerOperands(pResultType, pOperandType))
                     pResultType = Globals.pIntegerType;
 
                 //--real    <op> real    => real
                 //--real    <op> integer => real
                 //--integer <op> real    => real
-                else if (RealOperands(pResultType, pOperandType))
+                else if (TType.RealOperands(pResultType, pOperandType))
                     pResultType = Globals.pRealType;
 
                 else
@@ -109,7 +109,7 @@ partial class TParser
                 case TTokenCode.TcOR:
 
                 //--boolean OR boolean => boolean
-                CheckBoolean(pResultType, pOperandType);
+                TType.CheckBoolean(pResultType, pOperandType);
                 pResultType = Globals.pBooleanType;
                 break;
             }
@@ -135,7 +135,7 @@ partial class TParser
         pResultType = ParseFactor();
 
         //--Loop to parse subsequent multiplicative operators and factors.
-        while (Globals.TokenIn(token, tlMulOps) != 0)
+        while (Globals.TokenIn(token, Globals.tlMulOps))
         {
 
             //--Remember the operator and parse the subsequent factor.
@@ -150,13 +150,13 @@ partial class TParser
                 case TTokenCode.TcStar:
 
                 //--integer * integer => integer
-                if (IntegerOperands(pResultType, pOperandType))
+                if (TType.IntegerOperands(pResultType, pOperandType))
                     pResultType = Globals.pIntegerType;
 
                 //--real    * real    => real
                 //--real    * integer => real
                 //--integer * real    => real
-                else if (RealOperands(pResultType, pOperandType))
+                else if (TType.RealOperands(pResultType, pOperandType))
                     pResultType = Globals.pRealType;
 
                 else
@@ -169,7 +169,7 @@ partial class TParser
                 //--real    / real    => real
                 //--real    / integer => real
                 //--integer / real    => real
-                if (IntegerOperands(pResultType, pOperandType) || RealOperands(pResultType, pOperandType))
+                if (TType.IntegerOperands(pResultType, pOperandType) || TType.RealOperands(pResultType, pOperandType))
                     pResultType = Globals.pRealType;
                 else
                     Globals.Error(TErrorCode.ErrIncompatibleTypes);
@@ -179,7 +179,7 @@ partial class TParser
                 case TTokenCode.TcMOD:
 
                 //--integer <op> integer => integer
-                if (IntegerOperands(pResultType, pOperandType))
+                if (TType.IntegerOperands(pResultType, pOperandType))
                     pResultType = Globals.pIntegerType;
                 else
                     Globals.Error(TErrorCode.ErrIncompatibleTypes);
@@ -188,7 +188,7 @@ partial class TParser
                 case TTokenCode.TcAND:
 
                 //--boolean AND boolean => boolean
-                CheckBoolean(pResultType, pOperandType);
+                TType.CheckBoolean(pResultType, pOperandType);
                 pResultType = Globals.pBooleanType;
                 break;
             }
@@ -323,7 +323,7 @@ partial class TParser
             {
                 //--The operand type must be boolean.
                 GetTokenAppend();
-                CheckBoolean(ParseFactor());
+                TType.CheckBoolean(ParseFactor());
                 pResultType = Globals.pBooleanType;
 
                 break;
@@ -378,7 +378,6 @@ partial class TParser
             case TDefnCode.DcUndefined:
             break; // OK
 
-            //C++ TO C# CONVERTER TODO TASK: C# does not allow fall-through from a non-empty 'case':
             default:
             pResultType = Globals.pDummyType;
             Globals.Error(TErrorCode.ErrInvalidIdentifierUsage);
@@ -436,7 +435,7 @@ partial class TParser
 
                 //--The subscript expression must be assignment type
                 //--compatible with the corresponding subscript type.
-                CheckAssignmentTypeCompatible(pType.array.pIndexType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
+                TType.CheckAssignmentTypeCompatible(pType.array.pIndexType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
 
                 //--Update the variable's type.
                 pType = pType.array.pElmtType;
@@ -474,7 +473,7 @@ partial class TParser
 
         if ((token == TTokenCode.TcIdentifier) && (pType.form == TFormCode.FcRecord))
         {
-            TSymtabNode pFieldId = pType.record.pSymtab.Search(pToken.String());
+            TSymtabNode pFieldId = pType.record.pSymtab.Search(pToken.String);
             if (pFieldId == null)
                 Globals.Error(TErrorCode.ErrInvalidField);
             icode.Put(pFieldId);

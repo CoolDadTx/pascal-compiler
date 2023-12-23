@@ -44,7 +44,7 @@ partial class TParser
             ParseVariableDeclarations(pRoutineId);
         }
         
-        if (Globals.TokenIn(token, tlProcFuncStart) != 0)
+        if (Globals.TokenIn(token, Globals.tlProcFuncStart))
             ParseSubroutineDeclarations(pRoutineId);
     }
 
@@ -92,13 +92,13 @@ partial class TParser
             pConstId.defn.how = TDefnCode.DcConstant;
 
             //-- ;
-            Resync(tlDeclarationFollow, tlDeclarationStart, tlStatementStart);
+            Resync(Globals.tlDeclarationFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
             CondGetToken(TTokenCode.TcSemicolon, TErrorCode.ErrMissingSemicolon);
 
             //--Skip extra semicolons.
             while (token == TTokenCode.TcSemicolon)
                 GetToken();
-            Resync(tlDeclarationFollow, tlDeclarationStart, tlStatementStart);
+            Resync(Globals.tlDeclarationFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
         }
     }
 
@@ -113,7 +113,7 @@ partial class TParser
         TTokenCode sign = TTokenCode.TcDummy; // unary + or - sign, or none
 
         //--Unary + or -
-        if (Globals.TokenIn(token, tlUnaryOps) != 0)
+        if (Globals.TokenIn(token, Globals.tlUnaryOps))
         {
             if (token == TTokenCode.TcMinus)
                 sign = TTokenCode.TcMinus;
@@ -128,11 +128,11 @@ partial class TParser
             if (pToken.Type() == TDataType.TyInteger)
             {
                 pConstId.defn.constant.value.integer = sign == TTokenCode.TcMinus ? -pToken.Value().integer : pToken.Value().integer;
-                TType.SetType(pConstId.pType, pIntegerType);
+                TType.SetType(pConstId.pType, Globals.pIntegerType);
             } else
             {
                 pConstId.defn.constant.value.real = sign == TTokenCode.TcMinus ? -pToken.Value().real : pToken.Value().real;
-                TType.SetType(pConstId.pType, pRealType);
+                TType.SetType(pConstId.pType, Globals.pRealType);
             }
 
             GetToken();
@@ -310,7 +310,7 @@ partial class TParser
             pFirstId = ParseIdSublist(pRoutineId, pRecordType, out pLastId);
 
             //-- :
-            Resync(tlSublistFollow, tlDeclarationFollow);
+            Resync(Globals.tlSublistFollow, Globals.tlDeclarationFollow);
             CondGetToken(TTokenCode.TcColon, TErrorCode.ErrMissingColon);
 
             //--<type>
@@ -360,16 +360,16 @@ partial class TParser
             //-- END for record field declaration
             if (pRoutineId != null)
             {
-                Resync(tlDeclarationFollow, tlStatementStart);
+                Resync(Globals.tlDeclarationFollow, Globals.tlStatementStart);
                 CondGetToken(TTokenCode.TcSemicolon, TErrorCode.ErrMissingSemicolon);
 
                 //--Skip extra semicolons.
                 while (token == TTokenCode.TcSemicolon)
                     GetToken();
-                Resync(tlDeclarationFollow, tlDeclarationStart, tlStatementStart);
+                Resync(Globals.tlDeclarationFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
             } else
             {
-                Resync(tlFieldDeclFollow);
+                Resync(Globals.tlFieldDeclFollow);
                 if (token != TTokenCode.TcEND)
                 {
                     CondGetToken(TTokenCode.TcSemicolon, TErrorCode.ErrMissingSemicolon);
@@ -377,7 +377,7 @@ partial class TParser
                     //--Skip extra semicolons.
                     while (token == TTokenCode.TcSemicolon)
                         GetToken();
-                    Resync(tlFieldDeclFollow, tlDeclarationStart, tlStatementStart);
+                    Resync(Globals.tlFieldDeclFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
                 }
             }
         }
@@ -430,7 +430,7 @@ partial class TParser
 
             //-- ,
             GetToken();
-            Resync(tlIdentifierFollow);
+            Resync(Globals.tlIdentifierFollow);
             if (token == TTokenCode.TcComma)
             {
 
@@ -439,7 +439,7 @@ partial class TParser
                 do
                 {
                     GetToken();
-                    Resync(tlIdentifierStart, tlIdentifierFollow);
+                    Resync(Globals.tlIdentifierStart, Globals.tlIdentifierFollow);
                     if (token == TTokenCode.TcComma)
                         Globals.Error(TErrorCode.ErrMissingIdentifier);
                 } while (token == TTokenCode.TcComma);

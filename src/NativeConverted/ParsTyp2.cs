@@ -41,8 +41,8 @@ partial class TParser
             ParseIndexType(pElmtType);
 
             //-- ,
-            Resync(tlIndexFollow, tlIndexStart);
-            if ((token == TTokenCode.TcComma) || Globals.TokenIn(token, tlIndexStart))
+            Resync(Globals.tlIndexFollow, Globals.tlIndexStart);
+            if ((token == TTokenCode.TcComma) || Globals.TokenIn(token, Globals.tlIndexStart))
             {
 
                 //--For each type spec after the first, create an
@@ -61,7 +61,7 @@ partial class TParser
         CondGetToken(TTokenCode.TcRBracket, TErrorCode.ErrMissingRightBracket);
 
         //--OF
-        Resync(tlIndexListFollow, tlDeclarationStart, tlStatementStart);
+        Resync(Globals.tlIndexListFollow, Globals.tlDeclarationStart, Globals.tlStatementStart);
         CondGetToken(TTokenCode.TcOF, TErrorCode.ErrMissingOF);
 
         //--Final element type.
@@ -81,7 +81,7 @@ partial class TParser
     //--------------------------------------------------------------
     public void ParseIndexType ( TType pArrayType )
     {
-        if (Globals.TokenIn(token, tlIndexStart))
+        if (Globals.TokenIn(token, Globals.tlIndexStart))
         {
             TType pIndexType = ParseTypeSpec();
             TType.SetType(ref pArrayType.array.pIndexType, pIndexType);

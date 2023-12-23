@@ -29,14 +29,14 @@ partial class TParser
     //
     //  Return: ptr to head of parm id symbol table node list
     //--------------------------------------------------------------
-    public TSymtabNode ParseFormalParmList ( ref int count, ref int totalSize )
+    public TSymtabNode ParseFormalParmList ( out int count, out int totalSize )
     {
         //C++ TO C# CONVERTER NOTE: 'extern' variable declarations are not required in C#:
         //	extern int execFlag;
 
         TSymtabNode pParmId; // ptrs to parm symtab nodes
         TSymtabNode pFirstId;
-        TSymtabNode pLastId;
+        TSymtabNode pLastId = null;
         TSymtabNode pPrevSublistLastId = null;
         TSymtabNode pParmList = null; // ptr to list of parm nodes
         TDefnCode parmDefn; // how a parm is defined
@@ -81,7 +81,7 @@ partial class TParser
 
                 //-- ,
                 GetToken();
-                Resync(tlIdentifierFollow);
+                Resync(Globals.tlIdentifierFollow);
                 if (token == TTokenCode.TcComma)
                 {
 
@@ -90,7 +90,7 @@ partial class TParser
                     do
                     {
                         GetToken();
-                        Resync(tlIdentifierStart, tlIdentifierFollow);
+                        Resync(Globals.tlIdentifierStart, Globals.tlIdentifierFollow);
                         if (token == TTokenCode.TcComma)
                             Globals.Error(TErrorCode.ErrMissingIdentifier);
                     } while (token == TTokenCode.TcComma);
@@ -103,7 +103,7 @@ partial class TParser
             }
 
             //-- :
-            Resync(tlSublistFollow, tlDeclarationFollow);
+            Resync(Globals.tlSublistFollow, Globals.tlDeclarationFollow);
             CondGetToken(TTokenCode.TcColon, TErrorCode.ErrMissingColon);
 
             //--<type-id>
@@ -142,7 +142,7 @@ partial class TParser
             pPrevSublistLastId = pLastId;
 
             //-- ; or )
-            Resync(tlFormalParmsFollow, tlDeclarationFollow);
+            Resync(Globals.tlFormalParmsFollow, Globals.tlDeclarationFollow);
             if ((token == TTokenCode.TcIdentifier) || (token == TTokenCode.TcVAR))
                 Globals.Error(TErrorCode.ErrMissingSemicolon);
             else
@@ -161,7 +161,7 @@ partial class TParser
             for (pParmId = pParmList; pParmId != null; pParmId = pParmId.next)
             {
                 pParmId.defn.data.offset = offset;
-                offset += pParmId.defn.how == TDefnCode.DcValueParm ? pParmId.pType.size : sizeof(object*); // VAR pointer -  data value
+                offset += pParmId.defn.how == TDefnCode.DcValueParm ? pParmId.pType.size : IntPtr.Size; // VAR pointer -  data value
                 if ((offset & 1) != 0)
                     ++offset; // round up to even
             }
@@ -282,7 +282,7 @@ partial class TParser
         //--                        assignment type compatible with
         //--                        the formal parameter.
         if (pFormalId.defn.how == TDefnCode.DcValueParm)
-            CheckAssignmentTypeCompatible(pFormalId.pType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
+            TType.CheckAssignmentTypeCompatible(pFormalId.pType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
 
         //--Formal VAR parameter: The actual parameter must be a
         //--                      variable of the same type as the
@@ -294,7 +294,7 @@ partial class TParser
 
             if (pFormalId.pType != ParseVariable(pActualId))
                 Globals.Error(TErrorCode.ErrIncompatibleTypes);
-            Resync(tlExpressionFollow, tlStatementFollow, tlStatementStart);
+            Resync(Globals.tlExpressionFollow, Globals.tlStatementFollow, Globals.tlStatementStart);
         }
 
         //--Error: Parse the actual parameter anyway for error recovery.

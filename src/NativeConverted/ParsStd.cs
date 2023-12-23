@@ -115,7 +115,7 @@ partial class TParser
             }
 
             //-- , or )
-            Resync(tlActualVarParmFollow, tlStatementFollow, tlStatementStart);
+            Resync(Globals.tlActualVarParmFollow, Globals.tlStatementFollow, Globals.tlStatementStart);
         } while (token == TTokenCode.TcComma);
 
         //-- )

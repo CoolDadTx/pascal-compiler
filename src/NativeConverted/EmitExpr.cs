@@ -29,7 +29,7 @@ partial class TCodeGenerator
         TType pOperand2Type; // ptr to second operand's type
         TType pResultType; // ptr to result type
         TTokenCode op; // operator
-        TInstruction jumpOpcode; // jump instruction opcode
+        TInstruction jumpOpcode = default; // jump instruction opcode
         int jumpLabelIndex; // assembly jump label index
 
         //--Emit code for the first simple expression.
@@ -37,7 +37,7 @@ partial class TCodeGenerator
 
         //--If we now see a relational operator,
         //--emit code for the second simple expression.
-        if (TokenIn(token, tlRelOps) != 0)
+        if (Globals.TokenIn(token, Globals.tlRelOps))
         {
             EmitPushOperand(pResultType);
             op = token;
@@ -228,7 +228,7 @@ partial class TCodeGenerator
         TTokenCode unaryOp = TTokenCode.TcPlus; // unary operator
 
         //--Unary + or -
-        if (TokenIn(token, tlUnaryOps) != 0)
+        if (Globals.TokenIn(token, Globals.tlUnaryOps))
         {
             unaryOp = token;
             GetToken();
@@ -269,7 +269,7 @@ partial class TCodeGenerator
         }
 
         //--Loop to execute subsequent additive operators and terms.
-        while (TokenIn(token, tlAddOps) != 0)
+        while (Globals.TokenIn(token, Globals.tlAddOps))
         {
             op = token;
             pResultType = pResultType.Base();
@@ -386,7 +386,7 @@ partial class TCodeGenerator
         pResultType = EmitFactor();
 
         //--Loop to execute subsequent multiplicative operators and factors.
-        while (TokenIn(token, tlMulOps) != 0)
+        while (Globals.TokenIn(token, Globals.tlMulOps))
         {
             op = token;
             pResultType = pResultType.Base();
@@ -565,7 +565,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public TType EmitFactor ()
     {
-        TType pResultType; // ptr to result type
+        TType pResultType = Globals.pDummyType; // ptr to result type
 
         switch (token)
         {

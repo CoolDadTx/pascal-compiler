@@ -485,7 +485,7 @@ partial class TCodeGenerator
 
         //--Loop to print any modifiers (subscripts, record fields,
         //--or actual parameter lists).
-        while (TokenIn(token, tlIdModStart) != 0)
+        while (Globals.TokenIn(token, Globals.tlIdModStart))
         {
 
             //--Record field.
@@ -504,7 +504,7 @@ partial class TCodeGenerator
                 PutComment(token == TTokenCode.TcLParen ? "(" : "[");
                 GetToken();
 
-                while (TokenIn(token, tlIdModEnd) == 0)
+                while (Globals.TokenIn(token, Globals.tlIdModEnd))
                 {
                     EmitExprComment();
 

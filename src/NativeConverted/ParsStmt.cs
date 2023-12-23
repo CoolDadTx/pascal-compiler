@@ -77,7 +77,7 @@ partial class TParser
 
         //--Resynchronize at a proper statement ending.
         if (token != TTokenCode.TcEndOfFile)
-            Resync(tlStatementFollow, tlStatementStart);
+            Resync(Globals.tlStatementFollow, Globals.tlStatementStart);
     }
 
     //--------------------------------------------------------------
@@ -93,7 +93,7 @@ partial class TParser
         {
             ParseStatement();
 
-            if (Globals.TokenIn(token, tlStatementStart))
+            if (Globals.TokenIn(token, Globals.tlStatementStart))
                 Globals.Error(TErrorCode.ErrMissingSemicolon);
             else
             {
@@ -115,14 +115,14 @@ partial class TParser
         TType pTargetType = ParseVariable(pTargetId);
 
         //-- :=
-        Resync(tlColonEqual, tlExpressionStart);
+        Resync(Globals.tlColonEqual, Globals.tlExpressionStart);
         CondGetTokenAppend(TTokenCode.TcColonEqual, TErrorCode.ErrMissingColonEqual);
 
         //--<expr>
         TType pExprType = ParseExpression();
 
         //--Check for assignment compatibility.
-        CheckAssignmentTypeCompatible(pTargetType, pExprType, TErrorCode.ErrIncompatibleAssignment);
+        TType.CheckAssignmentTypeCompatible(pTargetType, pExprType, TErrorCode.ErrIncompatibleAssignment);
     }
 
     //--------------------------------------------------------------
@@ -142,7 +142,7 @@ partial class TParser
 
         //--<expr> : must be boolean
         InsertLineMarker();
-        CheckBoolean(ParseExpression());
+        TType.CheckBoolean(ParseExpression());
     }
 
     //--------------------------------------------------------------
@@ -159,10 +159,10 @@ partial class TParser
 
         //--<expr> : must be boolean
         GetTokenAppend();
-        CheckBoolean(ParseExpression());
+        TType.CheckBoolean(ParseExpression());
 
         //--DO
-        Resync(tlDO, tlStatementStart);
+        Resync(Globals.tlDO, Globals.tlStatementStart);
         CondGetTokenAppend(TTokenCode.TcDO, TErrorCode.ErrMissingDO);
 
         //--<stmt>
@@ -188,10 +188,10 @@ partial class TParser
 
         //--<expr> : must be boolean
         GetTokenAppend();
-        CheckBoolean(ParseExpression());
+        TType.CheckBoolean(ParseExpression());
 
         //--THEN
-        Resync(tlTHEN, tlStatementStart);
+        Resync(Globals.tlTHEN, Globals.tlStatementStart);
         CondGetTokenAppend(TTokenCode.TcTHEN, TErrorCode.ErrMissingTHEN);
 
         //--<stmt-1>
@@ -221,7 +221,7 @@ partial class TParser
     //--------------------------------------------------------------
     public void ParseFOR ()
     {
-        TType pControlType; // ptr to the control id's type object
+        TType pControlType = Globals.pDummyType; // ptr to the control id's type object
 
         //--Append a placeholder for the location of the token that
         //--follows the FOR statement.  Remember the location of this
@@ -256,24 +256,24 @@ partial class TParser
         }
 
         //-- :=
-        Resync(tlColonEqual, tlExpressionStart);
+        Resync(Globals.tlColonEqual, Globals.tlExpressionStart);
         CondGetTokenAppend(TTokenCode.TcColonEqual, TErrorCode.ErrMissingColonEqual);
 
         //--<expr-1>
-        CheckAssignmentTypeCompatible(pControlType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
+        TType.CheckAssignmentTypeCompatible(pControlType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
 
         //--TO or DOWNTO
-        Resync(tlTODOWNTO, tlExpressionStart);
-        if (Globals.TokenIn(token, tlTODOWNTO))
+        Resync(Globals.tlTODOWNTO, Globals.tlExpressionStart);
+        if (Globals.TokenIn(token, Globals.tlTODOWNTO))
             GetTokenAppend();
         else
             Globals.Error(TErrorCode.ErrMissingTOorDOWNTO);
 
         //--<expr-2>
-        CheckAssignmentTypeCompatible(pControlType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
+        TType.CheckAssignmentTypeCompatible(pControlType, ParseExpression(), TErrorCode.ErrIncompatibleTypes);
 
         //--DO
-        Resync(tlDO, tlStatementStart);
+        Resync(Globals.tlDO, Globals.tlStatementStart);
         CondGetTokenAppend(TTokenCode.TcDO, TErrorCode.ErrMissingDO);
 
         //--<stmt>
@@ -310,23 +310,23 @@ partial class TParser
             Globals.Error(TErrorCode.ErrIncompatibleTypes);
 
         //--OF
-        Resync(tlOF, tlCaseLabelStart);
+        Resync(Globals.tlOF, Globals.tlCaseLabelStart);
         CondGetTokenAppend(TTokenCode.TcOF, TErrorCode.ErrMissingOF);
 
         //--Loop to parse CASE branches.
         // true if another CASE branch,
         //   else false
-        var caseBranchFlag = Globals.TokenIn(token, tlCaseLabelStart);
+        var caseBranchFlag = Globals.TokenIn(token, Globals.tlCaseLabelStart);
         while (caseBranchFlag)
         {
-            if (Globals.TokenIn(token, tlCaseLabelStart))
+            if (Globals.TokenIn(token, Globals.tlCaseLabelStart))
                 ParseCaseBranch(pExprType, ref pCaseItemList);
 
             if (token == TTokenCode.TcSemicolon)
             {
                 GetTokenAppend();
                 caseBranchFlag = true;
-            } else if (Globals.TokenIn(token, tlCaseLabelStart))
+            } else if (Globals.TokenIn(token, Globals.tlCaseLabelStart))
             {
                 Globals.Error(TErrorCode.ErrMissingSemicolon);
                 caseBranchFlag = true;
@@ -350,7 +350,7 @@ partial class TParser
         PutCaseItem(0, 0); // end of table
 
         //--END
-        Resync(tlEND, tlStatementStart);
+        Resync(Globals.tlEND, Globals.tlStatementStart);
         CondGetTokenAppend(TTokenCode.TcEND, TErrorCode.ErrMissingEND);
         FixupLocationMarker(atFollowLocationMarker);
     }
@@ -370,13 +370,13 @@ partial class TParser
         //--<case-label-list>
         do
         {
-            ParseCaseLabel(pExprType, pCaseItemList);
+            ParseCaseLabel(pExprType, ref pCaseItemList);
             if (token == TTokenCode.TcComma)
             {
 
                 //--Saw comma, look for another CASE label.
                 GetTokenAppend();
-                if (Globals.TokenIn(token, tlCaseLabelStart))
+                if (Globals.TokenIn(token, Globals.tlCaseLabelStart))
                     caseLabelFlag = true;
                 else
                 {
@@ -391,12 +391,12 @@ partial class TParser
         } while (caseLabelFlag);
 
         //-- :
-        Resync(tlColon, tlStatementStart);
+        Resync(Globals.tlColon, Globals.tlStatementStart);
         CondGetTokenAppend(TTokenCode.TcColon, TErrorCode.ErrMissingColon);
 
         //--Loop to set the branch statement location into each CASE item
         //--for this branch.
-        for (var pItem = pCaseItemList; pItem && !pItem.atBranchStmt; pItem = pItem.next)
+        for (var pItem = pCaseItemList; pItem != null && (pItem.atBranchStmt != 0); pItem = pItem.next)
             pItem.atBranchStmt = icode.CurrentLocation() - 1;
 
         //--<stmt>
@@ -418,7 +418,7 @@ partial class TParser
         TCaseItem pCaseItem = new TCaseItem(ref pCaseItemList);
 
         //--Unary + or -
-        if (Globals.TokenIn(token, tlUnaryOps))
+        if (Globals.TokenIn(token, Globals.tlUnaryOps))
         {
             signFlag = true;
             GetTokenAppend();
