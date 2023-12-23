@@ -14,68 +14,35 @@ public enum TFormCode
 //--------------------------------------------------------------
 //  TType               Type class.
 //--------------------------------------------------------------
-public class TType : System.IDisposable
+public class TType : /*TypeDef,*/ IDisposable
 {
 	private int refCount; // reference count
 
 	public TFormCode form; // form code
 	public int size; // byte size of type
-	public TSymtabNode pTypeId; // ptr to symtab node of type identifier
+	public TSymtabNode pTypeId; // ptr to symtab node of type identifier    
 
-//C++ TO C# CONVERTER TODO TASK: Unions are not supported in C#:
-//	union
-//	{
-//
-//	//--Enumeration
-//	struct
-//	{
-//		TSymtabNode *pConstIds; // ptr to list of const id nodes
-//		int max; // max constant value
-//	}
-//	enumeration;
-//
-//	//--Subrange
-//	struct
-//	{
-//		TType *pBaseType; // ptr to base type object
-//		int min, max; // min and max subrange limit values
-//	}
-//	subrange;
-//
-//	//--Array
-//	struct
-//	{
-//		TType *pIndexType; // ptr to index type object
-//		TType *pElmtType; // ptr to elmt  type object
-//		int minIndex, maxIndex; // min and max index values
-//		int elmtCount; // count of array elmts
-//	}
-//	array;
-//
-//	//--Record
-//	struct
-//	{
-//		TSymtab *pSymtab; // ptr to record fields symtab
-//	}
-//	record;
-//	};
+    //Union in C++
+    private EnumerationTypeDef enumeration;
+    private SubrangeTypeDef subrange;
+    private ArrayTypeDef array;
+    private RecordTypeDef record;
+    //--General and string type constructors.
 
-	//--General and string type constructors.
+    //--------------------------------------------------------------
+    //  Constructors    General:
+    //
+    //      fc    : form code
+    //      s     : byte size of type
+    //      pNode : ptr to symbol table node of type identifier
+    //
+    //                  String: unnamed string type
+    //
+    //      length : string length
+    //--------------------------------------------------------------
 
-	//--------------------------------------------------------------
-	//  Constructors    General:
-	//
-	//      fc    : form code
-	//      s     : byte size of type
-	//      pNode : ptr to symbol table node of type identifier
-	//
-	//                  String: unnamed string type
-	//
-	//      length : string length
-	//--------------------------------------------------------------
-
-	//--General
-	public TType( TFormCode fc, int s, TSymtabNode pId )
+    //--General
+    public TType( TFormCode fc, int s, TSymtabNode pId )
 	{
 		form = fc;
 		size = s;
@@ -156,17 +123,11 @@ public class TType : System.IDisposable
 	   }
    }
 
-	public bool IsScalar()
-	{
-		return ( form != TFormCode.FcArray ) && ( form != TFormCode.FcRecord );
-	}
+    public bool IsScalar () => (form != TFormCode.FcArray) && (form != TFormCode.FcRecord);
 
-	public TType Base()
-	{
-	return form == TFormCode.FcSubrange ? subrange.pBaseType : this;
-	}
+    public TType Base () => form == TFormCode.FcSubrange ? subrange.pBaseType : this;
 
-	public enum TVerbosityCode
+    public enum TVerbosityCode
 	{
 		VcVerbose,
 		VcTerse
@@ -228,7 +189,7 @@ public class TType : System.IDisposable
         //--Print the names and values of the enumeration
         //--constant identifiers.
         Globals.list.PutLine( "--- Enumeration Constant Identifiers " + "(value = name) ---" );
-		for ( TSymtabNode pConstId = enumeration.pConstIds; pConstId != null; pConstId = pConstId.next )
+		for ( var pConstId = enumeration.pConstIds; pConstId != null; pConstId = pConstId.next )
 		{
             Globals.list.text = String.Format( "    {0:D} = {1}", pConstId.defn.constant.value.integer, pConstId.String() );
             Globals.list.PutLine();
@@ -252,7 +213,7 @@ public class TType : System.IDisposable
         Globals.list.PutLine();
 
 		//--Base range type
-		if ( subrange.pBaseType )
+		if (subrange.pBaseType != null)
 		{
             Globals.list.PutLine( "--- Base Type ---" );
 		    subrange.pBaseType.PrintTypeSpec( TVerbosityCode.VcTerse );
@@ -276,14 +237,14 @@ public class TType : System.IDisposable
         Globals.list.PutLine();
 
 		//--Index type
-		if ( array.pIndexType )
+		if (array.pIndexType != null)
 		{
             Globals.list.PutLine( "--- INDEX TYPE ---" );
 		    array.pIndexType.PrintTypeSpec( TVerbosityCode.VcTerse );
 		}
 
 		//--Element type
-		if ( array.pElmtType )
+		if (array.pElmtType != null)
 		{
             Globals.list.PutLine( "--- ELEMENT TYPE ---" );
 		    array.pElmtType.PrintTypeSpec( TVerbosityCode.VcTerse );
@@ -305,7 +266,7 @@ public class TType : System.IDisposable
         //--Print the names and values of the record field identifiers.
         Globals.list.PutLine( "--- Record Field Identifiers (offset : name) ---" );
         Globals.list.PutLine();
-		for (TSymtabNode pFieldId = record.pSymtab.Root(); pFieldId != null; pFieldId = pFieldId.next )
+		for (var pFieldId = record.pSymtab.Root(); pFieldId != null; pFieldId = pFieldId.next )
 		{
             Globals.list.text = String.Format( "    {0:D} : {1}", pFieldId.defn.data.offset, pFieldId.String() );
             Globals.list.PutLine();
@@ -492,4 +453,41 @@ public class TType : System.IDisposable
 
 		return ( ( pType1 == Globals.pRealType ) && ( pType2 == Globals.pRealType ) ) || ( ( pType1 == Globals.pRealType ) && ( pType2 == Globals.pIntegerType ) ) || ( ( pType2 == Globals.pRealType ) && ( pType1 == Globals.pIntegerType ) );
 	}
+}
+
+//From union in C++
+//public class TypeDef : OneOfBase<EnumerationTypeDef, SubrangeTypeDef, ArrayTypeDef, RecordTypeDef>
+//{
+//    public TypeDef ( OneOf<EnumerationTypeDef, SubrangeTypeDef, ArrayTypeDef, RecordTypeDef> input ) : base(input)
+//    {
+//    }
+
+//    public EnumerationTypeDef enumeration { get; set; }
+//    public SubrangeTypeDef subrange { get; set; }
+//    public ArrayTypeDef array { get; set; }
+//    public RecordTypeDef record { get; set; }
+//}
+
+public struct EnumerationTypeDef
+{
+    public TSymtabNode pConstIds { get; set; } //ptr to list of const id nodes
+    public int max { get; set; }
+}
+public struct SubrangeTypeDef
+{
+    public TType pBaseType; //ptr to base type object
+    public int min { get; set; }
+    public int max { get; set; } //min and max subrange limit values
+}
+public struct ArrayTypeDef
+{
+    public TType pIndexType; // ptr to index type object
+    public TType pElmtType; // ptr to elmt  type object
+    public int minIndex { get; set; }
+    public int maxIndex { get; set; } // min and max index values
+    public int elmtCount { get; set; } // count of array elmts
+}
+public struct RecordTypeDef
+{
+    public TSymtab pSymtab { get; set; } // ptr to record fields symtab
 }

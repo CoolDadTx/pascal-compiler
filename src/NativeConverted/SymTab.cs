@@ -209,38 +209,19 @@ public class TSymtabNode : IDisposable
     public void Dispose ()
     {
         //--First the subtrees (if any).
-        if (left != null)
-            left.Dispose();
-        if (right != null)
-            right.Dispose();
+        left?.Dispose();        
+        right?.Dispose();
 
-        //--Then delete this node's components.
-        Arrays.DeleteArray(pString);
-        if (pLineNumList != null)
-            pLineNumList.Dispose();
-        RemoveType(pType);
+        //--Then delete this node's components.        
+        pLineNumList?.Dispose();
+        TType.RemoveType(ref pType);
     }
 
-    public TSymtabNode LeftSubtree ()
-    {
-        return left;
-    }
-    public TSymtabNode RightSubtree ()
-    {
-        return right;
-    }
-    public string String ()
-    {
-        return pString;
-    }
-    public short SymtabIndex ()
-    {
-        return xSymtab;
-    }
-    public short NodeIndex ()
-    {
-        return xNode;
-    }
+    public TSymtabNode LeftSubtree () => left;
+    public TSymtabNode RightSubtree () => right;
+    public string String () => pString;
+    public short SymtabIndex () => xSymtab;
+    public short NodeIndex () => xNode;
 
     //--------------------------------------------------------------
     //  Convert     Convert the symbol table node into a form
@@ -252,15 +233,13 @@ public class TSymtabNode : IDisposable
     public void Convert ( TSymtabNode[] vpNodes )
     {
         //--First, convert the left subtree.
-        if (left != null)
-            left.Convert(vpNodes);
+        left?.Convert(vpNodes);
 
         //--Convert the node.
         vpNodes[xNode] = this;
 
         //--Finally, convert the right subtree.
-        if (right != null)
-            right.Convert(vpNodes);
+        right?.Convert(vpNodes);
     }
 
 
@@ -276,24 +255,22 @@ public class TSymtabNode : IDisposable
     {
         const int maxNamePrintWidth = 16;
 
-        //--Pirst, print left subtree
-        if (left != null)
-            left.Print();
+        //--Pirst, print left subtree        
+        left?.Print();
 
         //--Print the node:  first the name, then the list of line numbers,
         //--                 and then the identifier information.
         //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
         //ORIGINAL LINE: sprintf(list.text, "%*s", maxNamePrintWidth, pString);
-        Globals.list.text = String.Format("%*s", maxNamePrintWidth, pString);
+        Globals.list.text = System.String.Format("%*s", maxNamePrintWidth, pString);
         if (pLineNumList != null)
             pLineNumList.Print(pString.Length > maxNamePrintWidth, maxNamePrintWidth);
         else
             Globals.list.PutLine();
         PrintIdentifier();
 
-        //--Finally, print right subtree
-        if (right != null)
-            right.Print();
+        //--Finally, print right subtree        
+        right?.Print();
     }
 
     //--------------------------------------------------------------
@@ -340,9 +317,8 @@ public class TSymtabNode : IDisposable
             Globals.list.text = System.String.Format("Value = '{0}'", defn.constant.value.pString);
         Globals.list.PutLine();
 
-        //--Type information
-        if (pType != null)
-            pType.PrintTypeSpec(TType.TVerbosityCode.VcTerse);
+        //--Type information        
+        pType?.PrintTypeSpec(TType.TVerbosityCode.VcTerse);
         Globals.list.PutLine();
     }
 
@@ -358,9 +334,8 @@ public class TSymtabNode : IDisposable
         Globals.list.PutLine(defn.how == TDefnCode.DcVariable ? "Declared variable" : "Declared record field");
 
         //--Type information
-        if (pType != null)
-            pType.PrintTypeSpec(TType.TVerbosityCode.VcTerse);
-        if ((defn.how == TDefnCode.DcVariable) || (this.next) != null)
+        pType?.PrintTypeSpec(TType.TVerbosityCode.VcTerse);
+        if ((defn.how == TDefnCode.DcVariable) || next != null)
             Globals.list.PutLine();
     }
 
@@ -374,8 +349,7 @@ public class TSymtabNode : IDisposable
         Globals.list.PutLine();
         Globals.list.PutLine("Defined type");
 
-        if (pType != null)
-            pType.PrintTypeSpec(TType.TVerbosityCode.VcVerbose);
+        pType?.PrintTypeSpec(TType.TVerbosityCode.VcVerbose);
         Globals.list.PutLine();
     }
 }
@@ -392,7 +366,7 @@ public class TSymtab : System.IDisposable
     private TSymtabNode root; // ptr to binary tree root
     private TSymtabNode[] vpNodes; // ptr to vector of node ptrs
     private short cntNodes; // node counter
-    private short xSymtab; // symbol table index
+    private int xSymtab; // symbol table index
     private TSymtab next; // ptr to next symbol table in list
 
     public TSymtab ()
@@ -400,17 +374,16 @@ public class TSymtab : System.IDisposable
         root = null;
         vpNodes = null;
         cntNodes = 0;
-        xSymtab = cntSymtabs++;
+        xSymtab = Globals.cntSymtabs++;        
 
         //--Insert at the head of the symbol table list.
-        next = pSymtabList;
-        pSymtabList = this;
+        next = Globals.pSymtabList;
+        Globals.pSymtabList = this;
     }
 
     public void Dispose ()
     {
-        if (root != null)
-            root.Dispose();
+        root?.Dispose();
         Arrays.DeleteArray(vpNodes);
     }
 
@@ -469,7 +442,7 @@ public class TSymtab : System.IDisposable
     public TSymtabNode Enter ( string pString, TDefnCode dc = default )
     {
         TSymtabNode pNode; // ptr to node
-        TSymtabNode[] ppNode = root; // ptr to ptr to node
+        TSymtabNode ppNode = root; // ptr to ptr to node
 
         //--Loop to search table for insertion point.
         while ((pNode = ppNode[0]) != null)
@@ -786,7 +759,7 @@ public class TLineNumList : System.IDisposable
     //      indent      : amount to indent subsequent lines
     //--------------------------------------------------------------
 
-    public void Print ( int newLineFlag, int indent )
+    public void Print ( bool newLineFlag, int indent )
     {
         const int maxLineNumberPrintWidth = 4;
         const int maxLineNumbersPerLine = 10;
@@ -794,11 +767,10 @@ public class TLineNumList : System.IDisposable
         int n; // count of numbers per line
         TLineNumNode pNode; // ptr to line number node
             
-        //C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-        char plt = Globals.list.text[Globals.list.text.Length];
+        var plt = Globals.list.text;
         // ptr to where in list text to append
 
-        n = newLineFlag != 0 ? 0 : maxLineNumbersPerLine;
+        n = newLineFlag ? 0 : maxLineNumbersPerLine;
 
         //--Loop over line number nodes in the list.
         for (pNode = head; pNode != null; pNode = pNode.next)
@@ -811,14 +783,16 @@ public class TLineNumList : System.IDisposable
                 //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
                 //ORIGINAL LINE: sprintf(list.text, "%*s", indent, " ");
                 Globals.list.text = String.Format("%*s", indent, " ");
-                plt = Globals.list.text[indent];
+                plt = Globals.list.text;
                 n = maxLineNumbersPerLine;
             }
 
             //--Append the line number to the list text.
             //C++ TO C# CONVERTER TODO TASK: The following line has a C format specifier which cannot be directly translated to C#:
             //ORIGINAL LINE: sprintf(plt, "%*d", maxLineNumberPrintWidth, pNode->number);
-            plt = String.Format("%*d", maxLineNumberPrintWidth, pNode.number);
+            plt += String.Format("%*d", maxLineNumberPrintWidth, pNode.number);
+
+            //TODO: Is this correct??
             plt += maxLineNumberPrintWidth;
             --n;
         }

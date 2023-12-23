@@ -55,7 +55,7 @@
 
 	public static TSymtab globalSymtab = new TSymtab(); // the global symbol table
 	public static int cntSymtabs = 0; // symbol table counter
-	public static TSymtab[] pSymtabList; // ptr to head of symtab list
+	public static TSymtab pSymtabList; // ptr to head of symtab list
 	public static TSymtab[] vpSymtabs; // ptr to vector of symtab ptrs
 
 	//--------------------------------------------------------------
@@ -244,8 +244,8 @@
 	//              *                       *
 	//              *************************
 
-	public static readonly int minResWordLen = 2; // min and max reserved
-	public static readonly int maxResWordLen = 9; //   word lengths
+	public const int minResWordLen = 2; // min and max reserved
+	public const int maxResWordLen = 9; //   word lengths
 
 	internal static TResWord[] rw2 =
 	{

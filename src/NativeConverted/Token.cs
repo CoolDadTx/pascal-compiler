@@ -9,21 +9,12 @@ public abstract class TToken
 	protected TDataType type;
     //protected TDataValue value = new TDataValue();
     protected TDataValue value;
-	//protected string str = new string( new char[maxInputBufferSize] );
+    //protected string str = new string( new char[maxInputBufferSize] );
 
-	public TTokenCode Code()
-	{
-		return code;
-	}
-	public TDataType Type()
-	{
-		return type;
-	}
-	public TDataValue Value()
-	{
-		return value;
-	}
-	public string String { get; set; }
+    public TTokenCode Code () => code;
+    public TDataType Type () => type;
+    public TDataValue Value () => value;
+    public string String { get; set; }
     //public string String()
 	//{
     //		return str;
@@ -49,11 +40,8 @@ public class TEOFToken : TToken
 	public override void Get( TTextInBuffer buffer )
 	{
 	}
-	public override bool IsDelimiter()
-	{
-		return false;
-	}
-	public override void Print()
+    public override bool IsDelimiter () => false;
+    public override void Print()
 	{
 	}
 }

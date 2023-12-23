@@ -21,7 +21,7 @@
 public class TNumberToken : TToken
 {
     private char ch; // char fetched from input buffer
-    private string ps; // ptr into token string
+    private readonly StringBuilder ps = new StringBuilder(); // ptr into token string
     private int digitCount; // total no. of digits in number
     private bool countErrorFlag; // true if too many digits, else false
 
@@ -51,7 +51,7 @@ public class TNumberToken : TToken
         //--number of digits has not been exceeded.
         do
         {
-            *ps++= ch;
+            ps.Append(ch);
 
             if (++digitCount <= maxDigitCount)
                 value = 10 * value + (ch - '0'); // shift left and add
@@ -91,7 +91,7 @@ public class TNumberToken : TToken
                                    //   else false
 
         ch = buffer.Char();
-        ps = this.String;
+        
         digitCount = 0;
         countErrorFlag = false;
         code = TTokenCode.TcError; // we don't know what it is yet, but
@@ -121,7 +121,7 @@ public class TNumberToken : TToken
             } else
             {
                 type = TDataType.TyReal;
-                *ps++= '.';
+                ps.Append('.');
 
                 //--We have a fraction part.  Accumulate it into numValue.
                 if (!AccumulateValue(buffer, ref numValue, TErrorCode.ErrInvalidFraction))
@@ -135,13 +135,14 @@ public class TNumberToken : TToken
         if (!sawDotDotFlag && ((ch == 'E') || (ch == 'e')))
         {
             type = TDataType.TyReal;
-            *ps++= ch;
+            ps.Append(ch);
             ch = buffer.GetChar();
 
             //--Fetch the exponent's sign, if any.
             if ((ch == '+') || (ch == '-'))
             {
-                *ps++= exponentSign = ch;
+                exponentSign = ch;
+                ps.Append(ch);                
                 ch = buffer.GetChar();
             }
 
@@ -185,13 +186,10 @@ public class TNumberToken : TToken
             value.real = numValue;
         }
 
-        *ps = '\0';
+        this.String = ps.ToString();
         code = TTokenCode.TcNumber;
     }
-    public override bool IsDelimiter ()
-    {
-        return false;
-    }
+    public override bool IsDelimiter () => false;
 
     //--------------------------------------------------------------
     //  Print       Print the token to the list file.

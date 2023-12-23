@@ -22,8 +22,6 @@ public class TWordToken : TToken
     public void CheckForReservedWord ()
     {
         int len = this.String.Length;
-        //C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-        TResWord prw = new TResWord(); // ptr to elmt of reserved word table
 
         code = TTokenCode.TcIdentifier; // first assume it's an identifier
 
@@ -34,7 +32,7 @@ public class TWordToken : TToken
             //--Yes.  Use the word length to pick the appropriate list
             //--from the reserved word table and check to see if the word
             //--is in there.
-            for (prw = Globals.rwTable[len]; prw.pString != null; ++prw)
+            foreach (var prw in Globals.rwTable[len])
             {
                 if (String.Compare(this.String, prw.pString) == 0)
                 {
@@ -54,25 +52,21 @@ public class TWordToken : TToken
     public override void Get ( TTextInBuffer buffer )
     {
         char ch = buffer.Char(); // char fetched from input
-                                 //C++ TO C# CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
-        var ps = this.String;
 
+        var ps = new StringBuilder();
+        
         //--Get the word.
         do
         {
-            *ps++= ch;
+            ps.Append(ch);            
             ch = buffer.GetChar();
         } while ((Globals.charCodeMap[ch] == TCharCode.CcLetter) || (Globals.charCodeMap[ch] == TCharCode.CcDigit));
 
-        *ps = '\0';
-        string.ToLower(); // downshift its characters
+        this.String = ps.ToString().ToLower(); // downshift its characters
 
         CheckForReservedWord();
     }
-    public override bool IsDelimiter ()
-    {
-        return false;
-    }
+    public override bool IsDelimiter () => false;
 
     //--------------------------------------------------------------
     //  Print       Print the token to the list file.
@@ -80,9 +74,9 @@ public class TWordToken : TToken
     public override void Print ()
     {
         if (code == TTokenCode.TcIdentifier)
-            Globals.list.text = String.Format("\t{0,-18} {1}", ">> identifier:", string);
+            Globals.list.text = String.Format("\t{0,-18} {1}", ">> identifier:", this.String);
         else
-            Globals.list.text = String.Format("\t{0,-18} {1}", ">> reserved word:", string);
+            Globals.list.text = String.Format("\t{0,-18} {1}", ">> reserved word:", this.String);
 
         Globals.list.PutLine();
     }
