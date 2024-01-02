@@ -108,11 +108,32 @@ public enum TDataType
 //	char character;
 //	char *pString;
 //};
-[GenerateOneOf]
-public partial class TDataValue : OneOfBase<int, float, char, string>
-{
-    protected TDataValue ( OneOf<int, float, char, string> input ) : base(input)
+public struct TDataValue
+{    
+    public int integer
     {
+        get => _value.AsT0;
+        set => _value = OneOf<int, float, char, string>.FromT0(value);
     }
+
+    public float real
+    {
+        get => _value.AsT1;
+        set => _value = OneOf<int, float, char, string>.FromT1(value);
+    }
+
+    public char character
+    {
+        get => _value.AsT2;
+        set => _value = OneOf<int, float, char, string>.FromT2(value);
+    }
+
+    public string pString
+    {
+        get => _value.AsT3;
+        set => _value = OneOf<int, float, char, string>.FromT3(value);
+    }
+
+    private OneOf<int, float, char, string> _value;   
 }
 

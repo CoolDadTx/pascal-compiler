@@ -68,42 +68,51 @@ public class TLocalIds
 
 public class TDefn : System.IDisposable
 {
-
     public TDefnCode how; // the identifier was defined
 
     //C++ TO C# CONVERTER TODO TASK: Unions are not supported in C#:
-    //	union
-    //	{
-    //
-    //	//--Constant
-    //	struct
-    //	{
-    //		TDataValue value; // value of constant
-    //	}
-    //	constant;
-    //
-    //	//--Procedure, function, or standard routine
-    //	struct
-    //	{
-    //		TRoutineCode which; // routine code
-    //		int parmCount; // count of parameters
-    //		int totalParmSize; // total byte size of parms
-    //		int totalLocalSize; // total byte size of locals
-    //		TLocalIds locals; // local identifiers
-    //		TSymtab *pSymtab; // ptr to local symtab
-    //		TIcode *pIcode; // ptr to routine's icode
-    //	}
-    //	routine;
-    //
-    //	//--Variable, record field, or parameter
-    //	struct
-    //	{
-    //		int offset; // vars and parms: sequence count
-    //			 // fields: byte offset in record
-    //	}
-    //	data;
-    //	};
+    private OneOf<ConstantDefn, RoutineDefn, VariableDefn> _value;
 
+    //	//--Constant
+    public struct ConstantDefn
+    {
+        public TDataValue value { get; set; } // value of constant
+    }
+    public ConstantDefn constant 
+    {
+        get => _value.AsT0;
+        set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT0(value);
+    }
+    
+    //	//--Procedure, function, or standard routine
+    public struct RoutineDefn
+    {
+        public TRoutineCode which { get; set; } // routine code
+        public int parmCount { get; set; } // count of parameters
+        public int totalParmSize { get; set; } // total byte size of parms
+        public int totalLocalSize { get; set; } // total byte size of locals
+        public TLocalIds locals { get; set; } // local identifiers
+        public TSymtab pSymtab { get; set; } // ptr to local symtab
+        public TIcode pIcode { get; set; } // ptr to routine's icode
+    }
+    public RoutineDefn routine
+    {
+        get => _value.AsT1;
+        set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT1(value);
+    }
+
+    //	//--Variable, record field, or parameter
+    public struct VariableDefn
+    {
+        public int offset { get; set; } // vars and parms: sequence count
+                                        //			 // fields: byte offset in record
+    }
+    public VariableDefn data
+    {
+        get => _value.AsT2;
+        set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT2(value);
+    }
+    
     public TDefn ( TDefnCode dc )
     {
         how = dc;
@@ -134,10 +143,8 @@ public class TDefn : System.IDisposable
 
             if (routine.which == TRoutineCode.RcDeclared)
             {
-                if (routine.pSymtab != null)
-                    routine.pSymtab.Dispose();
-                if (routine.pIcode != null)
-                    routine.pIcode.Dispose();
+                routine.pSymtab?.Dispose();
+                routine.pIcode?.Dispose();
             }
             break;
 
@@ -153,12 +160,15 @@ public class TDefn : System.IDisposable
 
 public class TSymtabNode : IDisposable
 {
-    private TSymtabNode left; // ptrs to left and right subtrees
-    private TSymtabNode right;
-    private string pString; // ptr to symbol string
-    private short xSymtab; // symbol table index
+    //Needs to be visible to TSymNode
+    internal TSymtabNode left; // ptrs to left and right subtrees
+    internal TSymtabNode right;
+    internal string pString; // ptr to symbol string
+    internal TLineNumList pLineNumList; // ptr to list of line numbers
+
+    private int xSymtab; // symbol table index
     private short xNode; // node index
-    private TLineNumList pLineNumList; // ptr to list of line numbers
+    
 
     public TSymtabNode next; // ptr to next sibling in chain
     public TType pType; // ptr to type info
@@ -202,6 +212,12 @@ public class TSymtabNode : IDisposable
             pLineNumList = new TLineNumList();
     }
 
+    public TSymtabNode ( string pStr, TDefnCode dc, int symTabIndex, short nodeIndex ) : this(pStr, dc)
+    {
+        xSymtab = symTabIndex;
+        xNode = nodeIndex;
+    }
+
     //--------------------------------------------------------------
     //  Destructor      Deallocate a symbol table node.
     //--------------------------------------------------------------
@@ -220,7 +236,7 @@ public class TSymtabNode : IDisposable
     public TSymtabNode LeftSubtree () => left;
     public TSymtabNode RightSubtree () => right;
     public string String () => pString;
-    public short SymtabIndex () => xSymtab;
+    public int SymtabIndex () => xSymtab;
     public short NodeIndex () => xNode;
 
     //--------------------------------------------------------------
@@ -441,26 +457,34 @@ public class TSymtab : System.IDisposable
 
     public TSymtabNode Enter ( string pString, TDefnCode dc = default )
     {
-        TSymtabNode pNode; // ptr to node
+        TSymtabNode pNode = null; // ptr to node
         TSymtabNode ppNode = root; // ptr to ptr to node
 
         //--Loop to search table for insertion point.
-        while ((pNode = ppNode[0]) != null)
+        int comp = 0;
+        while (ppNode != null)        
         {
-            int comp = string.Compare(pString, pNode.pString); // compare strings
+            pNode = ppNode;
+
+            comp = String.Compare(pString, pNode.pString); // compare strings
             if (comp == 0)
                 return pNode; // found!
 
             //--Not yet found:  next search left or right subtree.
-            ppNode = comp < 0 ? &(pNode.left) : &(pNode.right);
+            ppNode = comp < 0 ? pNode.left : pNode.right;
         }
 
         //--Create and insert a new node.
-        pNode = new TSymtabNode(pString, dc); // create a new node,
-        pNode.xSymtab = xSymtab; // set its symtab and
-        pNode.xNode = cntNodes++; // node indexes,
-        ppNode[0] = pNode; // insert it, and
-        return pNode; // return a ptr to it
+        var newNode = new TSymtabNode(pString, dc, xSymtab, cntNodes++); // create a new node,
+        //pNode.xSymtab = xSymtab; // set its symtab and
+        //pNode.xNode = cntNodes++; // node indexes,
+        if (root == null)
+            root = newNode;
+        else if (comp < 0)
+            pNode.left = newNode;
+        else
+            pNode.right = newNode; // insert it, and
+        return newNode; // return a ptr to it
     }
 
     //--------------------------------------------------------------
@@ -687,21 +711,23 @@ public class TSymtabStack : System.IDisposable
 
 public class TLineNumNode
 {
-    private TLineNumNode next; // ptr to next node
-    private readonly int number; // the line number
-
+    //Needed by TSymbtab
+    internal TLineNumNode next; // ptr to next node
+    
     public TLineNumNode ()
     {
-        this.number = Globals.currentLineNumber;
+        number = Globals.currentLineNumber;
         next = null;
     }
+
+    public int number { get; }// the line number
 }
 
 //--------------------------------------------------------------
 //  TLineNumList        Line number list class.
 //--------------------------------------------------------------
 
-public class TLineNumList : System.IDisposable
+public class TLineNumList : IDisposable
 {
     private TLineNumNode head; // list head and tail
     private TLineNumNode tail;
@@ -721,15 +747,15 @@ public class TLineNumList : System.IDisposable
     //  Destructor      Deallocate a line number list.
     //--------------------------------------------------------------
 
+    //REMOVE: Does nothing
     public virtual void Dispose ()
     {
         //--Loop to delete each node in the list.
         while (head != null)
         {
             TLineNumNode pNode = head; // ptr to node to delete
-            head = head.next; // move down the list
-            if (pNode != null)
-                pNode.Dispose();
+            head = head.next; // move down the list            
+            //pNode?.Dispose();
         }
     }
 

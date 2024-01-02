@@ -26,8 +26,8 @@ partial class TParser
     //--------------------------------------------------------------
     public TType ParseArrayType ()
     {
-        TType pArrayType = new TType(TFormCode.FcArray, 0, null);
-        TType pElmtType = pArrayType;
+        var pArrayType = new TType(TFormCode.FcArray, 0, null);
+        var pElmtType = pArrayType;
         var indexFlag = false; // true if another array index, false if done
 
         //-- [
