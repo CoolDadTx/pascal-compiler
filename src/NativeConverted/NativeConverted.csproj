@@ -14,5 +14,6 @@
   <ItemGroup>
     <Using Include="OneOf" />
     <Using Include="System.Text" />
+    <Using Include="NativeConverted.Utility" />
   </ItemGroup>
 </Project>

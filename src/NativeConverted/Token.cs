@@ -4,8 +4,9 @@
 
 public abstract class TToken
 {
+    //Used by TICode
+	protected internal TTokenCode code;
 
-	protected TTokenCode code;
 	protected TDataType type;
     //protected TDataValue value = new TDataValue();
     protected TDataValue value;
