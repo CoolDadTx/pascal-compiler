@@ -360,17 +360,15 @@
             TStdRtn pSR = stdRtnList[i];
             TSymtabNode pRoutineId = pSymtab.Enter(pSR.pName, pSR.dc);
 
-            pRoutineId.defn.routine.which = pSR.rc;
-            pRoutineId.defn.routine.parmCount = 0;
-            pRoutineId.defn.routine.totalParmSize = 0;
-            pRoutineId.defn.routine.totalLocalSize = 0;
-            pRoutineId.defn.routine.locals.pParmIds = null;
-            pRoutineId.defn.routine.locals.pConstantIds = null;
-            pRoutineId.defn.routine.locals.pTypeIds = null;
-            pRoutineId.defn.routine.locals.pVariableIds = null;
-            pRoutineId.defn.routine.locals.pRoutineIds = null;
-            pRoutineId.defn.routine.pSymtab = null;
-            pRoutineId.defn.routine.pIcode = null;
+            pRoutineId.defn.routine = new TDefn.RoutineDefn() {
+                which = pSR.rc,
+                parmCount = 0,
+                totalParmSize = 0,
+                totalLocalSize = 0,
+                locals = new TLocalIds(),
+                pSymtab = null,
+                pIcode = null,
+            };        
             TType.SetType(ref pRoutineId.pType, pDummyType);
         } while (stdRtnList[++i].pName != null);
     }
@@ -502,8 +500,8 @@
         pBooleanType.enumeration.pConstIds = pFalseId; // first constant
 
         //--More initialization for the "false" and "true" id nodes.
-        pFalseId.defn.constant.value.integer = 0;
-        pTrueId.defn.constant.value.integer = 1;
+        pFalseId.defn.constant = new TDefn.ConstantDefn() { value = new TDataValue() { integer = 0 } };
+        pTrueId.defn.constant = new TDefn.ConstantDefn() { value = new TDataValue() { integer = 1 } };        
         TType.SetType(ref pTrueId.pType, pBooleanType);
         TType.SetType(ref pFalseId.pType, pBooleanType);
         pFalseId.next = pTrueId; // "false" node points to "true" node

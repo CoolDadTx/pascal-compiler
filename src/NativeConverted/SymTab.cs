@@ -69,44 +69,21 @@ public class TLocalIds
 public class TDefn : System.IDisposable
 {
     public TDefnCode how; // the identifier was defined
-
-    //C++ TO C# CONVERTER TODO TASK: Unions are not supported in C#:
+    
     private OneOf<ConstantDefn, RoutineDefn, VariableDefn> _value;
-
-    //	//--Constant
-    public struct ConstantDefn
-    {
-        public TDataValue value { get; set; } // value of constant
-    }
+    
     public ConstantDefn constant 
     {
         get => _value.AsT0;
         set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT0(value);
     }
     
-    //	//--Procedure, function, or standard routine
-    public struct RoutineDefn
-    {
-        public TRoutineCode which { get; set; } // routine code
-        public int parmCount { get; set; } // count of parameters
-        public int totalParmSize { get; set; } // total byte size of parms
-        public int totalLocalSize { get; set; } // total byte size of locals
-        public TLocalIds locals { get; set; } // local identifiers
-        public TSymtab pSymtab { get; set; } // ptr to local symtab
-        public TIcode pIcode { get; set; } // ptr to routine's icode
-    }
     public RoutineDefn routine
     {
         get => _value.AsT1;
         set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT1(value);
     }
-
-    //	//--Variable, record field, or parameter
-    public struct VariableDefn
-    {
-        public int offset { get; set; } // vars and parms: sequence count
-                                        //			 // fields: byte offset in record
-    }
+    
     public VariableDefn data
     {
         get => _value.AsT2;
@@ -825,4 +802,54 @@ public class TLineNumList : IDisposable
 
         Globals.list.PutLine();
     }
+}
+
+//	//--Constant
+public struct ConstantDefn
+{
+    public static ConstantDefn FromInteger ( int value ) => new ConstantDefn() { value = TDataValue.FromInteger(value)};
+
+    public static ConstantDefn FromReal ( float value ) => new ConstantDefn() { value = TDataValue.FromReal(value)};
+
+    public static ConstantDefn FromCharacter ( char value ) => new ConstantDefn() { value = TDataValue.FromCharacter(value) };
+
+    public static ConstantDefn FromString ( string value ) => new ConstantDefn() { value = TDataValue.FromString(value) };
+
+    public TDataValue value { get; set; } // value of constant
+}
+
+//	//--Procedure, function, or standard routine
+public struct RoutineDefn
+{
+    public TRoutineCode which { get; set; } // routine code
+    public int parmCount { get; set; } // count of parameters
+    public int totalParmSize { get; set; } // total byte size of parms
+    public int totalLocalSize { get; set; } // total byte size of locals
+    public TLocalIds locals { get; set; } // local identifiers
+    public TSymtab pSymtab { get; set; } // ptr to local symtab
+    public TIcode pIcode { get; set; } // ptr to routine's icode
+
+    public RoutineDefn SetTotalLocalSize ( int value ) => new RoutineDefn() {
+        which = this.which,
+        parmCount = this.parmCount,
+        totalParmSize = this.totalParmSize,
+        totalLocalSize = value,
+        locals = this.locals,
+        pSymtab = this.pSymtab,
+        pIcode = this.pIcode
+    };    
+}
+
+//	//--Variable, record field, or parameter
+public struct VariableDefn
+{
+    public VariableDefn () { }
+
+    public VariableDefn ( int value )
+    {
+        offset = value;
+    }
+
+    public int offset { get; set; } // vars and parms: sequence count
+                                    //			 // fields: byte offset in record
 }

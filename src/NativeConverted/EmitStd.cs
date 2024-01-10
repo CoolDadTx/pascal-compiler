@@ -464,7 +464,7 @@ partial class TCodeGenerator
         {
             Operator(TInstruction.Call);
             pAsmBuffer.Put('\t');
-            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcEof) != 0 ? StdEof : StdEoln);
+            NameLit(pRoutineId.defn.routine.which == TRoutineCode.RcEof ? StdEof : StdEoln);
             pAsmBuffer.PutLine();
         };
 
@@ -675,7 +675,7 @@ partial class TCodeGenerator
         TType pParmType = EmitExpression();
 
         {
-            Operator(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcPred) != 0 ? TInstruction.Decr : TInstruction.Incr);
+            Operator(pRoutineId.defn.routine.which == TRoutineCode.RcPred ? TInstruction.Decr : TInstruction.Incr);
             pAsmBuffer.Put('\t');
             Reg(TRegister.Ax);
             pAsmBuffer.PutLine();
@@ -755,7 +755,7 @@ partial class TCodeGenerator
         {
             Operator(TInstruction.Call);
             pAsmBuffer.Put('\t');
-            NameLit(pRoutineId.defn.routine.which == ((int)TRoutineCode.RcRound) != 0 ? StdRound : StdTrunc);
+            NameLit(pRoutineId.defn.routine.which == TRoutineCode.RcRound ? StdRound : StdTrunc);
             pAsmBuffer.PutLine();
         };
         {

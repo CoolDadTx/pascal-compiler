@@ -77,7 +77,7 @@ partial class TParser
             TSymtabNode pConstId = EnterNewLocal(pToken.String);
 
             //--Link the routine's local constant id nodes together.
-            if (!pRoutineId.defn.routine.locals.pConstantIds)
+            if (pRoutineId.defn.routine.locals.pConstantIds == null)
                 pRoutineId.defn.routine.locals.pConstantIds = pConstId;
             else
                 pLastId.next = pConstId;
@@ -127,12 +127,12 @@ partial class TParser
             case TTokenCode.TcNumber:
             if (pToken.Type() == TDataType.TyInteger)
             {
-                pConstId.defn.constant.value.integer = sign == TTokenCode.TcMinus ? -pToken.Value().integer : pToken.Value().integer;
-                TType.SetType(pConstId.pType, Globals.pIntegerType);
+                pConstId.defn.constant = ConstantDefn.FromInteger(sign == TTokenCode.TcMinus ? -pToken.Value().integer : pToken.Value().integer);
+                TType.SetType(ref pConstId.pType, Globals.pIntegerType);
             } else
             {
-                pConstId.defn.constant.value.real = sign == TTokenCode.TcMinus ? -pToken.Value().real : pToken.Value().real;
-                TType.SetType(pConstId.pType, Globals.pRealType);
+                pConstId.defn.constant = ConstantDefn.FromReal(sign == TTokenCode.TcMinus ? -pToken.Value().real : pToken.Value().real);
+                TType.SetType(ref pConstId.pType, Globals.pRealType);
             }
 
             GetToken();
@@ -154,8 +154,8 @@ partial class TParser
             //--Single character
             if (length == 1)
             {
-                pConstId.defn.constant.value.character = pToken.String[1];
-                TType.SetType(pConstId.pType, Globals.pCharType);
+                pConstId.defn.constant = ConstantDefn.FromCharacter(pToken.String[1]);
+                TType.SetType(ref pConstId.pType, Globals.pCharType);
             }
 
             //--String (character array):  Create a new unnamed
@@ -163,7 +163,7 @@ partial class TParser
             else
             {
                 var pString = CopyQuotedString(pToken.String);
-                pConstId.defn.constant.value.pString = pString;
+                pConstId.defn.constant = ConstantDefn.FromString(pString);                
                 TType.SetType(ref pConstId.pType, new TType(length));
             }
 
@@ -201,14 +201,14 @@ partial class TParser
         //--Integer identifier
         if (pId2.pType == Globals.pIntegerType)
         {
-            pId1.defn.constant.value.integer = sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.integer : pId2.defn.constant.value.integer;
+            pId1.defn.constant = ConstantDefn.FromInteger(sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.integer : pId2.defn.constant.value.integer);
             TType.SetType(ref pId1.pType, Globals.pIntegerType);
         }
 
         //--Real identifier
         else if (pId2.pType == Globals.pRealType)
         {
-            pId1.defn.constant.value.real = sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.real : pId2.defn.constant.value.real;
+            pId1.defn.constant = ConstantDefn.FromReal(sign == TTokenCode.TcMinus ? -pId2.defn.constant.value.real : pId2.defn.constant.value.real);
             TType.SetType(ref pId1.pType, Globals.pRealType);
         }
 
@@ -218,7 +218,7 @@ partial class TParser
             if (sign != TTokenCode.TcDummy)
                 Globals.Error(TErrorCode.ErrInvalidConstant);
 
-            pId1.defn.constant.value.character = pId2.defn.constant.value.character;
+            pId1.defn.constant = ConstantDefn.FromCharacter(pId2.defn.constant.value.character);
             TType.SetType(ref pId1.pType, Globals.pCharType);
         }
 
@@ -228,7 +228,7 @@ partial class TParser
             if (sign != TTokenCode.TcDummy)
                 Globals.Error(TErrorCode.ErrInvalidConstant);
 
-            pId1.defn.constant.value.integer = pId2.defn.constant.value.integer;
+            pId1.defn.constant = ConstantDefn.FromInteger(pId2.defn.constant.value.integer);
             TType.SetType(ref pId1.pType, pId2.pType);
         }
 
@@ -236,10 +236,10 @@ partial class TParser
         //                     no unary sign allowed.
         else if (pId2.pType.form == TFormCode.FcArray)
         {
-            if ((sign != TTokenCode.TcDummy) || (pId2.pType.array.pElmtType != pCharType))
+            if ((sign != TTokenCode.TcDummy) || (pId2.pType.array.pElmtType != Globals.pCharType))
                 Globals.Error(TErrorCode.ErrInvalidConstant);
 
-            pId1.defn.constant.value.pString = pId2.defn.constant.value.pString;
+            pId1.defn.constant = ConstantDefn.FromString(pId2.defn.constant.value.pString);
             TType.SetType(ref pId1.pType, pId2.pType);
         }
 
@@ -327,18 +327,18 @@ partial class TParser
 
                     //--Variables
                     if (Globals.execFlag)
-                        pId.defn.data.offset = offset++;
+                        pId.defn.data = new VariableDefn(offset++);
                     else
                     {
                         offset -= pType.size;
-                        pId.defn.data.offset = offset;
+                        pId.defn.data = new VariableDefn(offset);
                     }
                     totalSize += pType.size;
                 } else
                 {
 
                     //--Record fields
-                    pId.defn.data.offset = offset;
+                    pId.defn.data = new VariableDefn(offset);
                     offset += pType.size;
                 }
             }
@@ -347,7 +347,7 @@ partial class TParser
             {
 
                 //--Set the first sublist into the routine id's symtab node.
-                if (pRoutineId != null && (!pRoutineId.defn.routine.locals.pVariableIds))
+                if (pRoutineId != null && (pRoutineId.defn.routine.locals.pVariableIds == null))
                     pRoutineId.defn.routine.locals.pVariableIds = pFirstId;
 
                 //--Link this list to the previous sublist.
@@ -384,7 +384,7 @@ partial class TParser
 
         //--Set the routine identifier node or the record type object.
         if (pRoutineId != null)
-            pRoutineId.defn.routine.totalLocalSize = totalSize;
+            pRoutineId.defn.routine = pRoutineId.defn.routine.SetTotalLocalSize(totalSize);            
         else
             pRecordType.size = offset;
     }

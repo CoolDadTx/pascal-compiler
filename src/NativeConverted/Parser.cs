@@ -79,7 +79,7 @@ public partial class TParser : IDisposable
 
     private int PutLocationMarker () => icode.PutLocationMarker();
 
-    private void FixupLocationMarker ( int location ) => icode.FixupLocationMarker(location);
+    private void FixupLocationMarker ( int location ) => icode.FixupLocationMarker((short)location);
 
     private void PutCaseItem ( int value, int location ) => icode.PutCaseItem(value, location);
 

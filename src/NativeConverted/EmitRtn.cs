@@ -319,7 +319,7 @@ partial class TCodeGenerator
     //--------------------------------------------------------------
     public TType EmitSubroutineCall ( TSymtabNode pRoutineId )
     {
-        return pRoutineId.defn.routine.which == ((int)TRoutineCode.RcDeclared) != 0 ? EmitDeclaredSubroutineCall(pRoutineId) : EmitStandardSubroutineCall(pRoutineId);
+        return pRoutineId.defn.routine.which == TRoutineCode.RcDeclared ? EmitDeclaredSubroutineCall(pRoutineId) : EmitStandardSubroutineCall(pRoutineId);
     }
 
     //--------------------------------------------------------------

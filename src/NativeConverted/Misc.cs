@@ -109,12 +109,16 @@ public enum TDataType
 //	char *pString;
 //};
 public struct TDataValue
-{    
+{
+    public static TDataValue FromInteger ( int value ) => new TDataValue() { integer = value };
+
     public int integer
     {
         get => _value.AsT0;
         set => _value = OneOf<int, float, char, string>.FromT0(value);
     }
+
+    public static TDataValue FromReal ( float value ) => new TDataValue() { real = value };
 
     public float real
     {
@@ -122,11 +126,15 @@ public struct TDataValue
         set => _value = OneOf<int, float, char, string>.FromT1(value);
     }
 
+    public static TDataValue FromCharacter ( char value ) => new TDataValue() { character = value };
+
     public char character
     {
         get => _value.AsT2;
         set => _value = OneOf<int, float, char, string>.FromT2(value);
     }
+
+    public static TDataValue FromString ( string value ) => new TDataValue() { pString = value };
 
     public string pString
     {

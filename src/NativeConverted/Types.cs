@@ -23,10 +23,11 @@ public class TType : /*TypeDef,*/ IDisposable
 	public TSymtabNode pTypeId; // ptr to symtab node of type identifier    
 
     //Union in C++
-    private EnumerationTypeDef enumeration;
-    private SubrangeTypeDef subrange;
-    private ArrayTypeDef array;
-    private RecordTypeDef record;
+    //TODO: Public fields for now (private fields in code)
+    public EnumerationTypeDef enumeration;
+    public SubrangeTypeDef subrange;
+    public ArrayTypeDef array;
+    public RecordTypeDef record;
     //--General and string type constructors.
 
     //--------------------------------------------------------------

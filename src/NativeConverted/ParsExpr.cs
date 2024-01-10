@@ -268,11 +268,11 @@ partial class TParser
                     if (pToken.Type() == TDataType.TyInteger)
                     {
                         pResultType = Globals.pIntegerType;
-                        pNode.defn.constant.value.integer = pToken.Value().integer;
+                        pNode.defn.constant = ConstantDefn.FromInteger(pToken.Value().integer);
                     } else
                     {
                         pResultType = Globals.pRealType;
-                        pNode.defn.constant.value.real = pToken.Value().real;
+                        pNode.defn.constant = ConstantDefn.FromReal(pToken.Value().real);
                     }
                     TType.SetType(ref pNode.pType, pResultType);
                 }
@@ -305,10 +305,10 @@ partial class TParser
 
                     //--Set the character value or string pointer into the
                     //--symbol table node.
-                    if (length == 1)
-                        pNode.defn.constant.value.character = pString[1];
+                    if (length == 1)                        
+                        pNode.defn.constant = ConstantDefn.FromCharacter(pString[1]);
                     else
-                        pNode.defn.constant.value.pString = pString[1];
+                        pNode.defn.constant = ConstantDefn.FromString(pString);
                 }
 
                 //--Append the symbol table node handle to the icode.

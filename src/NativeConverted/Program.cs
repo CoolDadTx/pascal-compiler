@@ -22,8 +22,10 @@
         if (Globals.errorCount == 0)
         {
             Globals.vpSymtabs = new TSymtab[Globals.cntSymtabs];
-            foreach (var pSt in Globals.pSymtabList)            
+            for (var pSt = Globals.pSymtabList; pSt != null; pSt = pSt.Next())
+            {
                 pSt.Convert(Globals.vpSymtabs);
+            };
 
             TBackend pBackend = new TCodeGenerator(args[2]);
             pBackend.Go(pProgramId);
