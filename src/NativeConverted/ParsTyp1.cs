@@ -40,7 +40,7 @@ partial class TParser
             TSymtabNode pTypeId = EnterNewLocal(pToken.String);
 
             //--Link the routine's local type id nodes together.
-            if (!pRoutineId.defn.routine.locals.pTypeIds)
+            if (pRoutineId.defn.routine.locals.pTypeIds == null)
                 pRoutineId.defn.routine.locals.pTypeIds = pTypeId;
             else
                 pLastId.next = pTypeId;
@@ -174,7 +174,7 @@ partial class TParser
             if (pConstId.defn.how == TDefnCode.DcUndefined)
             {
                 pConstId.defn.how = TDefnCode.DcConstant;
-                pConstId.defn.constant.value.integer = constValue;
+                pConstId.defn.constant = ConstantDefn.FromInteger(constValue);
                 TType.SetType(ref pConstId.pType, pType);
 
                 //--Link constant identifier symbol table nodes together.
@@ -238,14 +238,18 @@ partial class TParser
         TType pType = new TType(TFormCode.FcSubrange, 0, null);
 
         //--<min-const>
-        TType.SetType(ref pType.subrange.pBaseType, ParseSubrangeLimit(pMinId, pType.subrange.min));
+        var value = pType.subrange.min;
+        TType.SetType(ref pType.subrange.pBaseType, ParseSubrangeLimit(pMinId, ref value));
+        pType.subrange.min = value;
 
         //-- ..
         Resync(Globals.tlSubrangeLimitFollow, Globals.tlDeclarationStart);
         CondGetToken(TTokenCode.TcDotDot, TErrorCode.ErrMissingDotDot);
 
         //--<max-const>
-        TType pMaxType = ParseSubrangeLimit(null, pType.subrange.max);
+        value = pType.subrange.max;
+        TType pMaxType = ParseSubrangeLimit(null, ref value);
+        pType.subrange.max = value;
 
         //--Check limits.
         if (pMaxType != pType.subrange.pBaseType)

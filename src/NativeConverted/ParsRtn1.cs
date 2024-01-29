@@ -147,7 +147,7 @@ partial class TParser
             TSymtabNode pRtnId = ParseSubroutine();
 
             //--Link the routine's local (nested) routine id nodes together.
-            if (!pRoutineId.defn.routine.locals.pRoutineIds)
+            if (pRoutineId.defn.routine.locals.pRoutineIds == null)
                 pRoutineId.defn.routine.locals.pRoutineIds = pRtnId;
             else
                 pLastId.next = pRtnId;

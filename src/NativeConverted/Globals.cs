@@ -360,7 +360,7 @@
             TStdRtn pSR = stdRtnList[i];
             TSymtabNode pRoutineId = pSymtab.Enter(pSR.pName, pSR.dc);
 
-            pRoutineId.defn.routine = new TDefn.RoutineDefn() {
+            pRoutineId.defn.routine = new RoutineDefn() {
                 which = pSR.rc,
                 parmCount = 0,
                 totalParmSize = 0,
@@ -500,8 +500,8 @@
         pBooleanType.enumeration.pConstIds = pFalseId; // first constant
 
         //--More initialization for the "false" and "true" id nodes.
-        pFalseId.defn.constant = new TDefn.ConstantDefn() { value = new TDataValue() { integer = 0 } };
-        pTrueId.defn.constant = new TDefn.ConstantDefn() { value = new TDataValue() { integer = 1 } };        
+        pFalseId.defn.constant = ConstantDefn.FromInteger(0);
+        pTrueId.defn.constant = ConstantDefn.FromInteger(1);
         TType.SetType(ref pTrueId.pType, pBooleanType);
         TType.SetType(ref pFalseId.pType, pBooleanType);
         pFalseId.next = pTrueId; // "false" node points to "true" node

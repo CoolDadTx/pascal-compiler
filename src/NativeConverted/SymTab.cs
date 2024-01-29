@@ -69,26 +69,28 @@ public class TLocalIds
 public class TDefn : System.IDisposable
 {
     public TDefnCode how; // the identifier was defined
-    
-    private OneOf<ConstantDefn, RoutineDefn, VariableDefn> _value;
-    
-    public ConstantDefn constant 
-    {
-        get => _value.AsT0;
-        set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT0(value);
-    }
-    
-    public RoutineDefn routine
-    {
-        get => _value.AsT1;
-        set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT1(value);
-    }
-    
-    public VariableDefn data
-    {
-        get => _value.AsT2;
-        set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT2(value);
-    }
+
+    //NOTE: Making this regular props and classes to resolve all the compile errors
+    //but then we have to either push the init to this type (e.g. lazy) or ensure everyone sets it    
+    //private OneOf<ConstantDefn, RoutineDefn, VariableDefn> _value;
+
+    public ConstantDefn constant { get; set; } = new ConstantDefn();
+    //{
+    //    get => _value.AsT0;
+    //    set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT0(value);
+    //}
+
+    public RoutineDefn routine { get; set; } = new RoutineDefn();
+    //{
+    //    get => _value.AsT1;
+    //    set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT1(value);        
+    //}
+
+    public VariableDefn data { get; set; } = new VariableDefn();
+    //{
+    //    get => _value.AsT2;
+    //    set => _value = OneOf<ConstantDefn, RoutineDefn, VariableDefn>.FromT2(value);        
+    //}    
     
     public TDefn ( TDefnCode dc )
     {
@@ -117,13 +119,15 @@ public class TDefn : System.IDisposable
             case TDefnCode.DcProgram:
             case TDefnCode.DcProcedure:
             case TDefnCode.DcFunction:
-
-            if (routine.which == TRoutineCode.RcDeclared)
             {
-                routine.pSymtab?.Dispose();
-                routine.pIcode?.Dispose();
-            }
-            break;
+                if (routine.which == TRoutineCode.RcDeclared)
+                {
+                    routine.pSymtab?.Dispose();
+                    routine.pIcode?.Dispose();
+                };
+
+                break;
+            };
 
             default:
             break;
@@ -805,7 +809,7 @@ public class TLineNumList : IDisposable
 }
 
 //	//--Constant
-public struct ConstantDefn
+public class ConstantDefn
 {
     public static ConstantDefn FromInteger ( int value ) => new ConstantDefn() { value = TDataValue.FromInteger(value)};
 
@@ -819,7 +823,7 @@ public struct ConstantDefn
 }
 
 //	//--Procedure, function, or standard routine
-public struct RoutineDefn
+public class RoutineDefn
 {
     public TRoutineCode which { get; set; } // routine code
     public int parmCount { get; set; } // count of parameters
@@ -841,7 +845,7 @@ public struct RoutineDefn
 }
 
 //	//--Variable, record field, or parameter
-public struct VariableDefn
+public class VariableDefn
 {
     public VariableDefn () { }
 

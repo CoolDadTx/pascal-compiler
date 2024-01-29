@@ -475,7 +475,7 @@ partial class TParser
                 {
                     pNode = EnterLocal(pToken.String);
                     pNode.pType = Globals.pIntegerType;
-                    pNode.defn.constant.value.integer = pToken.Value().integer;
+                    pNode.defn.constant = ConstantDefn.FromInteger(pToken.Value().integer);
                 }
                 icode.Put(pNode);
 
@@ -502,7 +502,7 @@ partial class TParser
                 {
                     pNode = EnterLocal(pToken.String);
                     pNode.pType = Globals.pCharType;
-                    pNode.defn.constant.value.character = pToken.String[1];
+                    pNode.defn.constant = ConstantDefn.FromCharacter(pToken.String[1]);
                 }
                 icode.Put(pNode);
 
